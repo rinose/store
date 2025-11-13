@@ -1,6 +1,9 @@
-import { NextResponse } from 'next/server';
 import { db } from '../../../firebase.js';
 import { collection, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
+
+// Configure for static export
+export const dynamic = 'force-static';
+export const revalidate = false;
 
 // For testing: http://localhost:3000/api/products
 
@@ -21,85 +24,44 @@ export async function GET() {
       });
     });
 
-    // Return the products as JSON
-    return NextResponse.json({
+    // Return the products as JSON using native Response
+    return new Response(JSON.stringify({
       success: true,
       products: products,
       count: products.length
+    }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
 
   } catch (error) {
     console.error('Error fetching products:', error);
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Failed to fetch products',
-        message: error.message 
+    return new Response(JSON.stringify({
+      success: false, 
+      error: 'Failed to fetch products',
+      message: error.message 
+    }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
       },
-      { status: 500 }
-    );
+    });
   }
 }
 
+// Note: POST methods don't work with static export
+// You'll need to remove this or handle it differently
 export async function POST(request) {
-  try {
-    // Parse the request body
-    const body = await request.json();
-    
-    // Validate required fields
-    if (!body.name || body.name.trim() === '') {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Product name is required' 
-        },
-        { status: 400 }
-      );
-    }
-
-    // Prepare the product data
-    const productData = {
-      name: body.name.trim(),
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    };
-
-    // Add any additional fields if provided
-    if (body.description) {
-      productData.description = body.description.trim();
-    }
-    if (body.price) {
-      productData.price = parseFloat(body.price);
-    }
-    if (body.category) {
-      productData.category = body.category.trim();
-    }
-
-    // Reference to the products collection
-    const productsRef = collection(db, 'demo', '/data/products');
-    
-    // Add the new product to Firestore
-    const docRef = await addDoc(productsRef, productData);
-
-    // Return success response
-    return NextResponse.json({
-      success: true,
-      message: 'Product created successfully',
-      product: {
-        id: docRef.id,
-        ...productData
-      }
-    }, { status: 201 });
-
-  } catch (error) {
-    console.error('Error creating product:', error);
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Failed to create product',
-        message: error.message 
-      },
-      { status: 500 }
-    );
-  }
+  // POST operations cannot be statically exported
+  return new Response(JSON.stringify({
+    success: false,
+    error: 'POST operations are not available in static export mode'
+  }), {
+    status: 405,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
 }
