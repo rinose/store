@@ -1,9 +1,8 @@
 import { db } from '../../../firebase.js';
 import { collection, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 
-// Configure for static export
-export const dynamic = 'force-static';
-export const revalidate = false;
+// Configure for dynamic route to allow POST operations
+export const dynamic = 'force-dynamic';
 
 // For testing: http://localhost:3000/api/products
 
@@ -51,17 +50,56 @@ export async function GET() {
   }
 }
 
-// Note: POST methods don't work with static export
-// You'll need to remove this or handle it differently
+// IMPORTANT: This POST method MUST exist for adding products to work
 export async function POST(request) {
-  // POST operations cannot be statically exported
-  return new Response(JSON.stringify({
-    success: false,
-    error: 'POST operations are not available in static export mode'
-  }), {
-    status: 405,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
+  try {
+    const body = await request.json();
+    const { name, description, price, category } = body;
+
+    if (!name) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Product name is required'
+      }), {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    }
+
+    // IMPORTANT: Use same 'products' collection as GET method
+    const productsRef = collection(db, 'demo', '/data/products');
+    const docRef = await addDoc(productsRef, {
+      name,
+      description: description || '',
+      price: price || 0,
+      category: category || '',
+      createdAt: serverTimestamp()
+    });
+
+    return new Response(JSON.stringify({
+      success: true,
+      message: 'Product added successfully',
+      productId: docRef.id
+    }), {
+      status: 201,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+  } catch (error) {
+    console.error('Error adding product:', error);
+    return new Response(JSON.stringify({
+      success: false,
+      error: 'Failed to add product',
+      message: error.message
+    }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+  }
 }
