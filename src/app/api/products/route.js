@@ -8,8 +8,8 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    // Products collection structure: data/products/
-    const productsRef = collection(db, 'data', 'products');
+    // Use the actual Firebase path structure: demo/data/products
+    const productsRef = collection(db, 'demo', 'data', 'products');
     
     // Get all documents from the collection
     const querySnapshot = await getDocs(productsRef);
@@ -54,7 +54,7 @@ export async function GET() {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { name, description, price, category } = body;
+    const { name, description, price, category, tags } = body;
 
     if (!name) {
       return new Response(JSON.stringify({
@@ -68,13 +68,14 @@ export async function POST(request) {
       });
     }
 
-    // IMPORTANT: Use same 'products' collection as GET method
-    const productsRef = collection(db, 'demo', '/data/products');
+    // Use the actual Firebase path structure: demo/data/products
+    const productsRef = collection(db, 'demo', 'data', 'products');
     const docRef = await addDoc(productsRef, {
       name,
       description: description || '',
       price: price || 0,
       category: category || '',
+      tags: tags || [],
       createdAt: serverTimestamp()
     });
 
@@ -122,8 +123,8 @@ export async function DELETE(request) {
       });
     }
 
-    // Delete product from Firestore
-    const productDocRef = doc(db, 'demo', '/data/products', productId);
+    // Delete product using the actual Firebase path structure
+    const productDocRef = doc(db, 'demo', 'data', 'products', productId);
     await deleteDoc(productDocRef);
 
     return new Response(JSON.stringify({
@@ -142,6 +143,72 @@ export async function DELETE(request) {
     return new Response(JSON.stringify({
       success: false,
       error: 'Failed to delete product',
+      message: error.message
+    }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+  }
+}
+
+// PUT method for updating product tags
+export async function PUT(request) {
+  try {
+    const url = new URL(request.url);
+    const productId = url.searchParams.get('id');
+    const body = await request.json();
+    const { tags } = body;
+
+    if (!productId) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Product ID is required'
+      }), {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    }
+
+    if (!Array.isArray(tags)) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Tags must be an array'
+      }), {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    }
+
+    // Update product tags using the actual Firebase path structure
+    const productDocRef = doc(db, 'demo', 'data', 'products', productId);
+    await updateDoc(productDocRef, {
+      tags: tags,
+      updatedAt: serverTimestamp()
+    });
+
+    return new Response(JSON.stringify({
+      success: true,
+      message: 'Product tags updated successfully',
+      productId: productId,
+      tags: tags
+    }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+  } catch (error) {
+    console.error('Error updating product tags:', error);
+    return new Response(JSON.stringify({
+      success: false,
+      error: 'Failed to update product tags',
       message: error.message
     }), {
       status: 500,

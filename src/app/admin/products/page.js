@@ -7,11 +7,13 @@ const AdminProductsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [creating, setCreating] = useState(false);
+  const [editingTags, setEditingTags] = useState({}); // Track which product tags are being edited
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     price: '',
-    category: ''
+    category: '',
+    tags: ''
   });
 
   // Fetch products on component mount
@@ -67,7 +69,8 @@ const AdminProductsPage = () => {
           name: formData.name,
           description: formData.description || undefined,
           price: formData.price ? parseFloat(formData.price) : undefined,
-          category: formData.category || undefined
+          category: formData.category || undefined,
+          tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : []
         })
       });
 
@@ -79,7 +82,8 @@ const AdminProductsPage = () => {
           name: '',
           description: '',
           price: '',
-          category: ''
+          category: '',
+          tags: ''
         });
         
         // Refresh products list
@@ -128,6 +132,59 @@ const AdminProductsPage = () => {
     } catch (err) {
       setError('Errore di rete: ' + err.message);
     }
+  };
+
+  const handleEditTags = (productId, currentTags) => {
+    setEditingTags({
+      ...editingTags,
+      [productId]: currentTags ? currentTags.join(', ') : ''
+    });
+  };
+
+  const handleCancelEditTags = (productId) => {
+    const newEditingTags = { ...editingTags };
+    delete newEditingTags[productId];
+    setEditingTags(newEditingTags);
+  };
+
+  const handleSaveTags = async (productId, productName) => {
+    try {
+      setError(null);
+      const tagString = editingTags[productId] || '';
+      const tags = tagString.split(',').map(tag => tag.trim()).filter(tag => tag);
+
+      const response = await fetch(`/api/products?id=${productId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ tags })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Remove from editing state
+        handleCancelEditTags(productId);
+        
+        // Refresh products list
+        await fetchProducts();
+        
+        // Show success message
+        alert(`Tags per "${productName}" aggiornati con successo!`);
+      } else {
+        setError(result.error || 'Errore durante l\'aggiornamento dei tags');
+      }
+    } catch (err) {
+      setError('Errore di rete: ' + err.message);
+    }
+  };
+
+  const handleTagInputChange = (productId, value) => {
+    setEditingTags({
+      ...editingTags,
+      [productId]: value
+    });
   };
 
   return (
@@ -210,6 +267,22 @@ const AdminProductsPage = () => {
             </div>
           </div>
 
+          <div>
+            <label htmlFor="tags" className="block text-sm font-medium text-gray-700 mb-1">
+              Tags
+            </label>
+            <input
+              type="text"
+              id="tags"
+              name="tags"
+              value={formData.tags}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Inserisci tags separati da virgola (es: dolce, pistacchio, siciliano)"
+            />
+            <p className="text-xs text-gray-500 mt-1">Separa i tags con virgole</p>
+          </div>
+
           <button
             type="submit"
             disabled={creating}
@@ -242,13 +315,14 @@ const AdminProductsPage = () => {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full table-auto">
+            <table className="min-w-full table-auto text-sm">{/* Added text-sm for better fit */}
               <thead>
                 <tr className="bg-gray-50">
                   <th className="px-4 py-2 text-left font-medium text-gray-700">Nome</th>
                   <th className="px-4 py-2 text-left font-medium text-gray-700">Descrizione</th>
                   <th className="px-4 py-2 text-left font-medium text-gray-700">Prezzo</th>
                   <th className="px-4 py-2 text-left font-medium text-gray-700">Categoria</th>
+                  <th className="px-4 py-2 text-left font-medium text-gray-700">Tags</th>
                   <th className="px-4 py-2 text-left font-medium text-gray-700">ID</th>
                   <th className="px-4 py-2 text-left font-medium text-gray-700">Azioni</th>
                 </tr>
@@ -264,6 +338,59 @@ const AdminProductsPage = () => {
                       {product.price ? `€${product.price.toFixed(2)}` : '-'}
                     </td>
                     <td className="px-4 py-2">{product.category || '-'}</td>
+                    <td className="px-4 py-2">
+                      {editingTags[product.id] !== undefined ? (
+                        <div className="flex gap-2 items-center">
+                          <input
+                            type="text"
+                            value={editingTags[product.id]}
+                            onChange={(e) => handleTagInputChange(product.id, e.target.value)}
+                            className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            placeholder="tags separati da virgola"
+                          />
+                          <button
+                            onClick={() => handleSaveTags(product.id, product.name)}
+                            className="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600"
+                            title="Salva tags"
+                          >
+                            ✓
+                          </button>
+                          <button
+                            onClick={() => handleCancelEditTags(product.id)}
+                            className="bg-gray-500 text-white px-2 py-1 rounded text-xs hover:bg-gray-600"
+                            title="Annulla"
+                          >
+                            ✗
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2 items-center">
+                          <div className="flex-1">
+                            {product.tags && product.tags.length > 0 ? (
+                              <div className="flex flex-wrap gap-1">
+                                {product.tags.map((tag, tagIndex) => (
+                                  <span
+                                    key={tagIndex}
+                                    className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded"
+                                  >
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-gray-400 text-xs">Nessun tag</span>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => handleEditTags(product.id, product.tags)}
+                            className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"
+                            title="Modifica tags"
+                          >
+                            ✏️
+                          </button>
+                        </div>
+                      )}
+                    </td>
                     <td className="px-4 py-2 text-xs text-gray-500 font-mono">
                       {product.id}
                     </td>
