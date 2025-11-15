@@ -97,6 +97,39 @@ const AdminProductsPage = () => {
     }
   };
 
+  const handleDelete = async (productId, productName) => {
+    // Show confirmation dialog
+    const isConfirmed = window.confirm(
+      `Sei sicuro di voler eliminare il prodotto "${productName}"?\n\nQuesta azione non può essere annullata.`
+    );
+
+    if (!isConfirmed) {
+      return; // User cancelled
+    }
+
+    try {
+      setError(null);
+
+      const response = await fetch(`/api/products?id=${productId}`, {
+        method: 'DELETE',
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Refresh products list
+        await fetchProducts();
+        
+        // Show success message
+        alert(`Prodotto "${productName}" eliminato con successo!`);
+      } else {
+        setError(result.error || 'Errore durante l\'eliminazione del prodotto');
+      }
+    } catch (err) {
+      setError('Errore di rete: ' + err.message);
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-6">
       <h1 className="text-3xl font-bold mb-8">Gestione Prodotti - Admin</h1>
@@ -217,6 +250,7 @@ const AdminProductsPage = () => {
                   <th className="px-4 py-2 text-left font-medium text-gray-700">Prezzo</th>
                   <th className="px-4 py-2 text-left font-medium text-gray-700">Categoria</th>
                   <th className="px-4 py-2 text-left font-medium text-gray-700">ID</th>
+                  <th className="px-4 py-2 text-left font-medium text-gray-700">Azioni</th>
                 </tr>
               </thead>
               <tbody>
@@ -232,6 +266,15 @@ const AdminProductsPage = () => {
                     <td className="px-4 py-2">{product.category || '-'}</td>
                     <td className="px-4 py-2 text-xs text-gray-500 font-mono">
                       {product.id}
+                    </td>
+                    <td className="px-4 py-2">
+                      <button
+                        onClick={() => handleDelete(product.id, product.name)}
+                        className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
+                        title={`Elimina ${product.name}`}
+                      >
+                        🗑️ Elimina
+                      </button>
                     </td>
                   </tr>
                 ))}
