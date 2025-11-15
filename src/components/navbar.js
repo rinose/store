@@ -1,9 +1,10 @@
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
-import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { Bars3Icon, BellIcon, XMarkIcon, ShoppingCartIcon } from '@heroicons/react/24/outline'
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from 'react';
 import { auth } from "../firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
+import { useBasket } from '../contexts/BasketContext';
 
 
 
@@ -13,6 +14,7 @@ function classNames(...classes) {
 
 export default function Navbar() {
   const [user, setUser] = useState(null);
+  const { getBasketItemsCount } = useBasket();
 
   const router = useRouter();
   const pathname = usePathname();
@@ -21,6 +23,8 @@ export default function Navbar() {
     { name: 'Categorie', href: '/categories', current: pathname === "/categories" },
     { name: 'Admin', href: '/admin', current: pathname === "/admin" },
   ]
+
+  const basketItemsCount = getBasketItemsCount();
 
 
   useEffect(() => {
@@ -81,6 +85,22 @@ export default function Navbar() {
             </div>
           </div>
           <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
+            {/* Shopping Cart Icon */}
+            <button
+              type="button"
+              onClick={() => router.push('/basket')}
+              className="relative rounded-full p-1 text-gray-400 focus:outline-2 focus:outline-offset-2 focus:outline-indigo-500 dark:hover:text-white mr-3"
+            >
+              <span className="absolute -inset-1.5" />
+              <span className="sr-only">View shopping cart</span>
+              <ShoppingCartIcon aria-hidden="true" className="size-6" />
+              {basketItemsCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                  {basketItemsCount > 99 ? '99+' : basketItemsCount}
+                </span>
+              )}
+            </button>
+            
             <button
               type="button"
               className="relative rounded-full p-1 text-gray-400 focus:outline-2 focus:outline-offset-2 focus:outline-indigo-500 dark:hover:text-white"

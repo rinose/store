@@ -153,13 +153,12 @@ export async function DELETE(request) {
   }
 }
 
-// PUT method for updating product tags
+// PUT method for updating product fields
 export async function PUT(request) {
   try {
     const url = new URL(request.url);
     const productId = url.searchParams.get('id');
     const body = await request.json();
-    const { tags } = body;
 
     if (!productId) {
       return new Response(JSON.stringify({
@@ -173,30 +172,60 @@ export async function PUT(request) {
       });
     }
 
-    if (!Array.isArray(tags)) {
-      return new Response(JSON.stringify({
-        success: false,
-        error: 'Tags must be an array'
-      }), {
-        status: 400,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+    // Prepare the update data
+    const updateData = {
+      updatedAt: serverTimestamp()
+    };
+
+    // Handle different types of updates
+    if (body.hasOwnProperty('tags')) {
+      if (!Array.isArray(body.tags)) {
+        return new Response(JSON.stringify({
+          success: false,
+          error: 'Tags must be an array'
+        }), {
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+      }
+      updateData.tags = body.tags;
     }
 
-    // Update product tags using the actual Firebase path structure
+    if (body.hasOwnProperty('price')) {
+      // Handle price updates (can be null)
+      if (body.price !== null && (isNaN(body.price) || body.price < 0)) {
+        return new Response(JSON.stringify({
+          success: false,
+          error: 'Price must be a valid positive number or null'
+        }), {
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+      }
+      updateData.price = body.price;
+    }
+
+    if (body.hasOwnProperty('category')) {
+      updateData.category = body.category || '';
+    }
+
+    if (body.hasOwnProperty('ingredients')) {
+      updateData.ingredients = body.ingredients || '';
+    }
+
+    // Update product using the actual Firebase path structure
     const productDocRef = doc(db, 'demo', 'data', 'products', productId);
-    await updateDoc(productDocRef, {
-      tags: tags,
-      updatedAt: serverTimestamp()
-    });
+    await updateDoc(productDocRef, updateData);
 
     return new Response(JSON.stringify({
       success: true,
-      message: 'Product tags updated successfully',
+      message: 'Product updated successfully',
       productId: productId,
-      tags: tags
+      updatedFields: Object.keys(updateData).filter(key => key !== 'updatedAt')
     }), {
       status: 200,
       headers: {
@@ -205,10 +234,10 @@ export async function PUT(request) {
     });
 
   } catch (error) {
-    console.error('Error updating product tags:', error);
+    console.error('Error updating product:', error);
     return new Response(JSON.stringify({
       success: false,
-      error: 'Failed to update product tags',
+      error: 'Failed to update product',
       message: error.message
     }), {
       status: 500,

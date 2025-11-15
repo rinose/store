@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useBasket } from '../../contexts/BasketContext';
 
 const ProductPage = () => {
+  const { addToBasket, getBasketItemQuantity } = useBasket();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -10,6 +12,10 @@ const ProductPage = () => {
   const [selectedTags, setSelectedTags] = useState([]);
   const [availableTags, setAvailableTags] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Modal state for ingredients
+  const [showIngredientsModal, setShowIngredientsModal] = useState(false);
+  const [selectedProductForIngredients, setSelectedProductForIngredients] = useState(null);
 
   useEffect(() => {
     fetchProducts();
@@ -83,6 +89,29 @@ const ProductPage = () => {
   const clearFilters = () => {
     setSelectedTags([]);
     setSearchTerm('');
+  };
+
+  const handleAddToCart = (product) => {
+    if (!product.price) {
+      alert('Non è possibile aggiungere al carrello un prodotto senza prezzo');
+      return;
+    }
+    
+    addToBasket(product, 1);
+    
+    // Show success message
+    const productName = product.name || 'Prodotto';
+    alert(`${productName} aggiunto al carrello!`);
+  };
+
+  const handleShowIngredients = (product) => {
+    setSelectedProductForIngredients(product);
+    setShowIngredientsModal(true);
+  };
+
+  const handleCloseIngredientsModal = () => {
+    setShowIngredientsModal(false);
+    setSelectedProductForIngredients(null);
   };
 
   if (loading) {
@@ -250,7 +279,34 @@ const ProductPage = () => {
                 </div>
               )}
 
-              <p className="text-xs text-gray-400">ID: {product.id}</p>
+              <div className="mt-4 flex items-center justify-between">
+                <button
+                  onClick={() => handleAddToCart(product)}
+                  disabled={!product.price}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    product.price
+                      ? 'bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
+                  title={product.price ? 'Aggiungi al carrello' : 'Prezzo non disponibile'}
+                >
+                  {product.price ? '🛒 Aggiungi al carrello' : 'Prezzo non disponibile'}
+                </button>
+                
+                <button
+                  onClick={() => handleShowIngredients(product)}
+                  className="bg-gray-100 text-gray-700 px-3 py-2 rounded-md text-sm hover:bg-gray-200 transition-colors"
+                  title="Vedi ingredienti"
+                >
+                  ℹ️ Info
+                </button>
+              </div>
+              
+              {getBasketItemQuantity(product.id) > 0 && (
+                <div className="mt-2 text-sm text-green-600 font-medium text-center">
+                  Nel carrello: {getBasketItemQuantity(product.id)}
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -261,6 +317,107 @@ const ProductPage = () => {
           Totale prodotti: {products.length} | Visualizzati: {filteredProducts.length}
         </p>
       </div>
+
+      {/* Ingredients Modal */}
+      {showIngredientsModal && selectedProductForIngredients && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-800">
+                    {selectedProductForIngredients.name}
+                  </h2>
+                  <p className="text-sm text-gray-500">Ingredienti</p>
+                </div>
+                <button
+                  onClick={handleCloseIngredientsModal}
+                  className="text-gray-400 hover:text-gray-600 text-xl font-bold"
+                  title="Chiudi"
+                >
+                  ×
+                </button>
+              </div>
+
+              {selectedProductForIngredients.description && (
+                <div className="mb-4">
+                  <h3 className="text-sm font-medium text-gray-700 mb-1">Descrizione:</h3>
+                  <p className="text-gray-600 text-sm">{selectedProductForIngredients.description}</p>
+                </div>
+              )}
+
+              <div className="mb-4">
+                <h3 className="text-sm font-medium text-gray-700 mb-2">Ingredienti:</h3>
+                {selectedProductForIngredients.ingredients ? (
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <p className="text-gray-700 whitespace-pre-line">
+                      {selectedProductForIngredients.ingredients}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <p className="text-gray-500 italic">
+                      Nessun ingrediente disponibile per questo prodotto.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {selectedProductForIngredients.category && (
+                <div className="mb-4">
+                  <h3 className="text-sm font-medium text-gray-700 mb-1">Categoria:</h3>
+                  <p className="text-gray-600">{selectedProductForIngredients.category}</p>
+                </div>
+              )}
+
+              {selectedProductForIngredients.tags && selectedProductForIngredients.tags.length > 0 && (
+                <div className="mb-4">
+                  <h3 className="text-sm font-medium text-gray-700 mb-2">Tags:</h3>
+                  <div className="flex flex-wrap gap-1">
+                    {selectedProductForIngredients.tags.map((tag, index) => (
+                      <span
+                        key={index}
+                        className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {selectedProductForIngredients.price && (
+                <div className="mb-6">
+                  <h3 className="text-sm font-medium text-gray-700 mb-1">Prezzo:</h3>
+                  <p className="text-lg font-bold text-green-600">
+                    €{selectedProductForIngredients.price.toFixed(2)}
+                  </p>
+                </div>
+              )}
+
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={handleCloseIngredientsModal}
+                  className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition-colors"
+                >
+                  Chiudi
+                </button>
+                {selectedProductForIngredients.price && (
+                  <button
+                    onClick={() => {
+                      handleAddToCart(selectedProductForIngredients);
+                      handleCloseIngredientsModal();
+                    }}
+                    className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors"
+                  >
+                    🛒 Aggiungi al carrello
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

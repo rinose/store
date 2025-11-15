@@ -8,12 +8,16 @@ const AdminProductsPage = () => {
   const [error, setError] = useState(null);
   const [creating, setCreating] = useState(false);
   const [editingTags, setEditingTags] = useState({}); // Track which product tags are being edited
+  const [editingPrice, setEditingPrice] = useState({}); // Track which product prices are being edited
+  const [editingCategory, setEditingCategory] = useState({}); // Track which product categories are being edited
+  const [editingIngredients, setEditingIngredients] = useState({}); // Track which product ingredients are being edited
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     price: '',
     category: '',
-    tags: ''
+    tags: '',
+    ingredients: ''
   });
 
   // Fetch products on component mount
@@ -70,7 +74,8 @@ const AdminProductsPage = () => {
           description: formData.description || undefined,
           price: formData.price ? parseFloat(formData.price) : undefined,
           category: formData.category || undefined,
-          tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : []
+          tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [],
+          ingredients: formData.ingredients || undefined
         })
       });
 
@@ -83,7 +88,8 @@ const AdminProductsPage = () => {
           description: '',
           price: '',
           category: '',
-          tags: ''
+          tags: '',
+          ingredients: ''
         });
         
         // Refresh products list
@@ -187,6 +193,171 @@ const AdminProductsPage = () => {
     });
   };
 
+  // Price editing functions
+  const handleEditPrice = (productId, currentPrice) => {
+    setEditingPrice({
+      ...editingPrice,
+      [productId]: currentPrice ? currentPrice.toString() : ''
+    });
+  };
+
+  const handleCancelEditPrice = (productId) => {
+    const newEditingPrice = { ...editingPrice };
+    delete newEditingPrice[productId];
+    setEditingPrice(newEditingPrice);
+  };
+
+  const handleSavePrice = async (productId, productName) => {
+    try {
+      setError(null);
+      const priceString = editingPrice[productId] || '';
+      const price = priceString.trim() ? parseFloat(priceString) : null;
+
+      if (priceString.trim() && (isNaN(price) || price < 0)) {
+        setError('Il prezzo deve essere un numero valido maggiore o uguale a 0');
+        return;
+      }
+
+      const response = await fetch(`/api/products?id=${productId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ price })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Remove from editing state
+        handleCancelEditPrice(productId);
+        
+        // Refresh products list
+        await fetchProducts();
+        
+        // Show success message
+        alert(`Prezzo per "${productName}" aggiornato con successo!`);
+      } else {
+        setError(result.error || 'Errore durante l\'aggiornamento del prezzo');
+      }
+    } catch (err) {
+      setError('Errore di rete: ' + err.message);
+    }
+  };
+
+  const handlePriceInputChange = (productId, value) => {
+    setEditingPrice({
+      ...editingPrice,
+      [productId]: value
+    });
+  };
+
+  // Category editing functions
+  const handleEditCategory = (productId, currentCategory) => {
+    setEditingCategory({
+      ...editingCategory,
+      [productId]: currentCategory || ''
+    });
+  };
+
+  const handleCancelEditCategory = (productId) => {
+    const newEditingCategory = { ...editingCategory };
+    delete newEditingCategory[productId];
+    setEditingCategory(newEditingCategory);
+  };
+
+  const handleSaveCategory = async (productId, productName) => {
+    try {
+      setError(null);
+      const category = editingCategory[productId] || '';
+
+      const response = await fetch(`/api/products?id=${productId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ category: category.trim() })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Remove from editing state
+        handleCancelEditCategory(productId);
+        
+        // Refresh products list
+        await fetchProducts();
+        
+        // Show success message
+        alert(`Categoria per "${productName}" aggiornata con successo!`);
+      } else {
+        setError(result.error || 'Errore durante l\'aggiornamento della categoria');
+      }
+    } catch (err) {
+      setError('Errore di rete: ' + err.message);
+    }
+  };
+
+  const handleCategoryInputChange = (productId, value) => {
+    setEditingCategory({
+      ...editingCategory,
+      [productId]: value
+    });
+  };
+
+  // Ingredients editing functions
+  const handleEditIngredients = (productId, currentIngredients) => {
+    setEditingIngredients({
+      ...editingIngredients,
+      [productId]: currentIngredients || ''
+    });
+  };
+
+  const handleCancelEditIngredients = (productId) => {
+    const newEditingIngredients = { ...editingIngredients };
+    delete newEditingIngredients[productId];
+    setEditingIngredients(newEditingIngredients);
+  };
+
+  const handleSaveIngredients = async (productId, productName) => {
+    try {
+      setError(null);
+      const ingredients = editingIngredients[productId] || '';
+
+      const response = await fetch(`/api/products?id=${productId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ingredients: ingredients.trim() })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Remove from editing state
+        handleCancelEditIngredients(productId);
+        
+        // Refresh products list
+        await fetchProducts();
+        
+        // Show success message
+        alert(`Ingredienti per "${productName}" aggiornati con successo!`);
+      } else {
+        setError(result.error || 'Errore durante l\'aggiornamento degli ingredienti');
+      }
+    } catch (err) {
+      setError('Errore di rete: ' + err.message);
+    }
+  };
+
+  const handleIngredientsInputChange = (productId, value) => {
+    setEditingIngredients({
+      ...editingIngredients,
+      [productId]: value
+    });
+  };
+
   return (
     <div className="container mx-auto px-4 py-6">
       <h1 className="text-3xl font-bold mb-8">Gestione Prodotti - Admin</h1>
@@ -283,6 +454,22 @@ const AdminProductsPage = () => {
             <p className="text-xs text-gray-500 mt-1">Separa i tags con virgole</p>
           </div>
 
+          <div>
+            <label htmlFor="ingredients" className="block text-sm font-medium text-gray-700 mb-1">
+              Ingredienti
+            </label>
+            <textarea
+              id="ingredients"
+              name="ingredients"
+              value={formData.ingredients}
+              onChange={handleInputChange}
+              rows={4}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Inserisci gli ingredienti, uno per riga o separati da virgola"
+            />
+            <p className="text-xs text-gray-500 mt-1">Elenca tutti gli ingredienti del prodotto</p>
+          </div>
+
           <button
             type="submit"
             disabled={creating}
@@ -323,7 +510,7 @@ const AdminProductsPage = () => {
                   <th className="px-4 py-2 text-left font-medium text-gray-700">Prezzo</th>
                   <th className="px-4 py-2 text-left font-medium text-gray-700">Categoria</th>
                   <th className="px-4 py-2 text-left font-medium text-gray-700">Tags</th>
-                  <th className="px-4 py-2 text-left font-medium text-gray-700">ID</th>
+                  <th className="px-4 py-2 text-left font-medium text-gray-700">Ingredienti</th>
                   <th className="px-4 py-2 text-left font-medium text-gray-700">Azioni</th>
                 </tr>
               </thead>
@@ -335,9 +522,91 @@ const AdminProductsPage = () => {
                       {product.description || '-'}
                     </td>
                     <td className="px-4 py-2">
-                      {product.price ? `€${product.price.toFixed(2)}` : '-'}
+                      {editingPrice[product.id] !== undefined ? (
+                        <div className="flex gap-2 items-center">
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={editingPrice[product.id]}
+                            onChange={(e) => handlePriceInputChange(product.id, e.target.value)}
+                            className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            placeholder="0.00"
+                          />
+                          <button
+                            onClick={() => handleSavePrice(product.id, product.name)}
+                            className="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600"
+                            title="Salva prezzo"
+                          >
+                            ✓
+                          </button>
+                          <button
+                            onClick={() => handleCancelEditPrice(product.id)}
+                            className="bg-gray-500 text-white px-2 py-1 rounded text-xs hover:bg-gray-600"
+                            title="Annulla"
+                          >
+                            ✗
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2 items-center">
+                          <div className="flex-1">
+                            {product.price ? `€${product.price.toFixed(2)}` : (
+                              <span className="text-gray-400 text-xs">Nessun prezzo</span>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => handleEditPrice(product.id, product.price)}
+                            className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"
+                            title="Modifica prezzo"
+                          >
+                            ✏️
+                          </button>
+                        </div>
+                      )}
                     </td>
-                    <td className="px-4 py-2">{product.category || '-'}</td>
+                    <td className="px-4 py-2">
+                      {editingCategory[product.id] !== undefined ? (
+                        <div className="flex gap-2 items-center">
+                          <input
+                            type="text"
+                            value={editingCategory[product.id]}
+                            onChange={(e) => handleCategoryInputChange(product.id, e.target.value)}
+                            className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            placeholder="Inserisci categoria"
+                          />
+                          <button
+                            onClick={() => handleSaveCategory(product.id, product.name)}
+                            className="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600"
+                            title="Salva categoria"
+                          >
+                            ✓
+                          </button>
+                          <button
+                            onClick={() => handleCancelEditCategory(product.id)}
+                            className="bg-gray-500 text-white px-2 py-1 rounded text-xs hover:bg-gray-600"
+                            title="Annulla"
+                          >
+                            ✗
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2 items-center">
+                          <div className="flex-1">
+                            {product.category || (
+                              <span className="text-gray-400 text-xs">Nessuna categoria</span>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => handleEditCategory(product.id, product.category)}
+                            className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"
+                            title="Modifica categoria"
+                          >
+                            ✏️
+                          </button>
+                        </div>
+                      )}
+                    </td>
                     <td className="px-4 py-2">
                       {editingTags[product.id] !== undefined ? (
                         <div className="flex gap-2 items-center">
@@ -391,8 +660,58 @@ const AdminProductsPage = () => {
                         </div>
                       )}
                     </td>
-                    <td className="px-4 py-2 text-xs text-gray-500 font-mono">
-                      {product.id}
+                    <td className="px-4 py-2">
+                      {editingIngredients[product.id] !== undefined ? (
+                        <div className="flex gap-2 items-center">
+                          <textarea
+                            value={editingIngredients[product.id]}
+                            onChange={(e) => handleIngredientsInputChange(product.id, e.target.value)}
+                            className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            placeholder="Ingredienti del prodotto"
+                            rows={2}
+                          />
+                          <div className="flex flex-col gap-1">
+                            <button
+                              onClick={() => handleSaveIngredients(product.id, product.name)}
+                              className="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600"
+                              title="Salva ingredienti"
+                            >
+                              ✓
+                            </button>
+                            <button
+                              onClick={() => handleCancelEditIngredients(product.id)}
+                              className="bg-gray-500 text-white px-2 py-1 rounded text-xs hover:bg-gray-600"
+                              title="Annulla"
+                            >
+                              ✗
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2 items-center">
+                          <div className="flex-1">
+                            {product.ingredients ? (
+                              <div className="text-xs text-gray-700 max-w-xs overflow-hidden">
+                                <div className="truncate" title={product.ingredients}>
+                                  {product.ingredients.length > 100 
+                                    ? product.ingredients.substring(0, 100) + '...'
+                                    : product.ingredients
+                                  }
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="text-gray-400 text-xs">Nessun ingrediente</span>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => handleEditIngredients(product.id, product.ingredients)}
+                            className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"
+                            title="Modifica ingredienti"
+                          >
+                            ✏️
+                          </button>
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-2">
                       <button
