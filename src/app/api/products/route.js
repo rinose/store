@@ -54,7 +54,7 @@ export async function GET() {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { name, description, price, category, tags } = body;
+    const { name, description, price, category, tags, ingredients, imageUrls } = body;
 
     if (!name) {
       return new Response(JSON.stringify({
@@ -76,6 +76,8 @@ export async function POST(request) {
       price: price || 0,
       category: category || '',
       tags: tags || [],
+      ingredients: ingredients || '',
+      imageUrls: imageUrls || [], // Store array of image URLs
       createdAt: serverTimestamp()
     });
 
@@ -215,6 +217,14 @@ export async function PUT(request) {
 
     if (body.hasOwnProperty('ingredients')) {
       updateData.ingredients = body.ingredients || '';
+    }
+
+    if (body.hasOwnProperty('imageUrl')) {
+      updateData.imageUrl = body.imageUrl || '';
+    }
+
+    if (body.hasOwnProperty('imageUrls')) {
+      updateData.imageUrls = body.imageUrls || [];
     }
 
     // Update product using the actual Firebase path structure
