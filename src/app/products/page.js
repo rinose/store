@@ -12,6 +12,7 @@ const ProductPage = () => {
   const [selectedTags, setSelectedTags] = useState([]);
   const [availableTags, setAvailableTags] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
   
   // Modal state for ingredients
   const [showIngredientsModal, setShowIngredientsModal] = useState(false);
@@ -137,31 +138,35 @@ const ProductPage = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <h1 className="text-2xl font-bold mb-6">Prodotti</h1>
-      
-      <div className="bg-white shadow-md rounded-lg p-6 mb-6">
-        <h2 className="text-lg font-semibold mb-4">Cerca e Filtra Prodotti</h2>
-        
-        <div className="mb-4">
-          <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-2">
-            Cerca per nome, descrizione o categoria
-          </label>
-          <input
-            type="text"
-            id="search"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Inserisci termini di ricerca..."
-          />
+    <div className="container mx-auto px-2 py-4">
+      <div className="bg-white shadow-md rounded-lg p-3 mb-6">
+        <div className="flex gap-4 items-start mb-4">
+          <div className="flex-shrink-0 md:w-1/3">
+            <input
+              type="text"
+              id="search"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Inserisci termini di ricerca..."
+            />
+          </div>
+
+          <div className="ml-auto">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="px-4 py-2 bg-brand-gold text-white rounded-full hover:bg-brand-black transition-colors flex items-center gap-2"
+            >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
+            </svg>
+
+            </button>
+          </div>
         </div>
 
-        {availableTags.length > 0 && (
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Filtra per tags
-            </label>
+        {showFilters && availableTags.length > 0 && (
+          <div className="m2-4 pt-2">
             <div className="flex flex-wrap gap-2">
               {availableTags.map(tag => (
                 <button
@@ -182,7 +187,7 @@ const ProductPage = () => {
 
         {(selectedTags.length > 0 || searchTerm.trim()) && (
           <div className="flex items-center gap-4 flex-wrap">
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 py-2 flex-wrap">
               <span className="text-sm text-gray-600">Filtri attivi:</span>
               {searchTerm.trim() && (
                 <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
@@ -204,21 +209,19 @@ const ProductPage = () => {
                 </span>
               ))}
             </div>
-            <button
-              onClick={clearFilters}
-              className="bg-gray-500 text-white px-3 py-1 text-sm rounded hover:bg-gray-600"
-            >
-              Pulisci filtri
-            </button>
           </div>
         )}
+        {
+          ( filteredProducts.length < products.length ) && (
+          <div className="flex justify-between py-2items-center">
+            <p className="text-gray-600">
+              {filteredProducts.length} di {products.length} prodotti
+            </p>
+          </div>
+          )
+        }
       </div>
 
-      <div className="flex justify-between items-center mb-4">
-        <p className="text-gray-600">
-          Mostrando {filteredProducts.length} di {products.length} prodotti
-        </p>
-      </div>
       
       {filteredProducts.length === 0 ? (
         <div className="text-center py-8">
@@ -345,20 +348,23 @@ const ProductPage = () => {
                       disabled={!product.price}
                       className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                         product.price
-                          ? 'bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500'
+                          ? 'bg-brand-gold text-white hover:bg-brand-black focus:outline-none focus:ring-2 focus:ring-blue-500'
                           : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       }`}
                       title={product.price ? 'Aggiungi al carrello' : 'Prezzo non disponibile'}
                     >
-                      {product.price ? '🛒 Aggiungi' : 'Non disponibile'}
+                      {product.price ? 'Aggiungi al carrello' : 'Non disponibile'}
                     </button>
                     
                     <button
                       onClick={() => handleShowIngredients(product)}
-                      className="bg-gray-100 text-gray-700 px-3 py-2 rounded-md text-sm hover:bg-gray-200 transition-colors"
+                      className="bg-white text-gray-700 px-3 py-2 rounded-md text-sm hover:bg-gray-200 transition-colors"
                       title="Vedi ingredienti"
                     >
-                      ℹ️ Info
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
+                      </svg>
+
                     </button>
                   </div>
                   
@@ -475,7 +481,7 @@ const ProductPage = () => {
                     }}
                     className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors"
                   >
-                    🛒 Aggiungi al carrello
+                    Aggiungi al carrello
                   </button>
                 )}
               </div>

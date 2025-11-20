@@ -43,9 +43,9 @@ export default function Navbar() {
   return (
     <Disclosure
       as="nav"
-      className="relative bg-[color:#aa8510] mx-auto w-4/5 my-2 rounded-full dark:bg-gray-800/50 dark:after:pointer-events-none dark:after:absolute dark:after:inset-x-0 dark:after:bottom-0 dark:after:h-px dark:after:bg-white/10"
+      className="relative bg-[color:#aa8510] md:mx-auto md:w-4/5 md:my-2 md:rounded-full dark:bg-gray-800/50 dark:after:pointer-events-none dark:after:absolute dark:after:inset-x-0 dark:after:bottom-0 dark:after:h-px dark:after:bg-white/10"
     >
-      <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl md:px-2 sm:px-6 lg:px-8">
         <div className="relative flex h-16 items-center justify-between">
           <div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
             {/* Mobile menu button*/}
@@ -58,11 +58,11 @@ export default function Navbar() {
           </div>
           <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
             <div className="flex shrink-0 items-center">
-              <img
-                alt="Store.com Logo"
+              <a href="/"><img
+                alt="Cristofaro Chef Logo"
                 src="/images/logo_gold.jpg"
                 className="h-10 w-auto"
-              />
+              /></a>
             </div>
             <div className="hidden sm:ml-6 sm:block">
               <div className="flex space-x-4">
@@ -89,7 +89,7 @@ export default function Navbar() {
             <button
               type="button"
               onClick={() => router.push('/basket')}
-              className="relative rounded-full p-1 text-gray-400 focus:outline-2 focus:outline-offset-2 focus:outline-indigo-500 dark:hover:text-white mr-3"
+              className="relative rounded-full p-1 text-white focus:outline-2 focus:outline-offset-2 focus:outline-indigo-500 dark:hover:text-white mr-3"
             >
               <span className="absolute -inset-1.5" />
               <span className="sr-only">View shopping cart</span>
@@ -99,15 +99,6 @@ export default function Navbar() {
                   {basketItemsCount > 99 ? '99+' : basketItemsCount}
                 </span>
               )}
-            </button>
-            
-            <button
-              type="button"
-              className="relative rounded-full p-1 text-gray-400 focus:outline-2 focus:outline-offset-2 focus:outline-indigo-500 dark:hover:text-white"
-            >
-              <span className="absolute -inset-1.5" />
-              <span className="sr-only">View notifications</span>
-              <BellIcon aria-hidden="true" className="size-6" />
             </button>
 
             {/* Profile dropdown */}
