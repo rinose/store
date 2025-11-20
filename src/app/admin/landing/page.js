@@ -155,7 +155,7 @@ const AdminLandingPage = () => {
   }
 
   return (
-    <>
+    <div className="dark:text-gray-500">
       <h1 className="text-3xl font-bold mb-8">Gestione Landing Page</h1>
       
       {error && (
@@ -426,7 +426,7 @@ const AdminLandingPage = () => {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
