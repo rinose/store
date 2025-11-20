@@ -1,9 +1,10 @@
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
-import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { Bars3Icon, BellIcon, XMarkIcon, ShoppingCartIcon } from '@heroicons/react/24/outline'
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from 'react';
 import { auth } from "../firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
+import { useBasket } from '../contexts/BasketContext';
 
 
 
@@ -13,6 +14,7 @@ function classNames(...classes) {
 
 export default function Navbar() {
   const [user, setUser] = useState(null);
+  const { getBasketItemsCount } = useBasket();
 
   const router = useRouter();
   const pathname = usePathname();
@@ -21,6 +23,8 @@ export default function Navbar() {
     { name: 'Categorie', href: '/categories', current: pathname === "/categories" },
     { name: 'Admin', href: '/admin', current: pathname === "/admin" },
   ]
+
+  const basketItemsCount = getBasketItemsCount();
 
 
   useEffect(() => {
@@ -39,13 +43,13 @@ export default function Navbar() {
   return (
     <Disclosure
       as="nav"
-      className="relative bg-gray-800 dark:bg-gray-800/50 dark:after:pointer-events-none dark:after:absolute dark:after:inset-x-0 dark:after:bottom-0 dark:after:h-px dark:after:bg-white/10"
+      className="relative bg-[color:#aa8510] md:mx-auto md:w-4/5 md:my-2 md:rounded-full dark:bg-gray-800/50 dark:after:pointer-events-none dark:after:absolute dark:after:inset-x-0 dark:after:bottom-0 dark:after:h-px dark:after:bg-white/10"
     >
-      <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl md:px-2 sm:px-6 lg:px-8">
         <div className="relative flex h-16 items-center justify-between">
           <div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
             {/* Mobile menu button*/}
-            <DisclosureButton className="group relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-white/5 hover:text-white focus:outline-2 focus:-outline-offset-1 focus:outline-indigo-500">
+            <DisclosureButton className="group relative inline-flex items-center justify-center rounded-md p-2 text-white hover:bg-white/5 hover:text-gray-800 focus:outline-2 focus:-outline-offset-1 focus:outline-indigo-500">
               <span className="absolute -inset-0.5" />
               <span className="sr-only">Open main menu</span>
               <Bars3Icon aria-hidden="true" className="block size-6 group-data-open:hidden" />
@@ -54,11 +58,11 @@ export default function Navbar() {
           </div>
           <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
             <div className="flex shrink-0 items-center">
-              <img
-                alt="Store.com Logo"
-                src="/images/vercel.svg"
-                className="h-8 w-auto"
-              />
+              <a href="/"><img
+                alt="Cristofaro Chef Logo"
+                src="/images/logo_gold.jpg"
+                className="h-10 w-auto"
+              /></a>
             </div>
             <div className="hidden sm:ml-6 sm:block">
               <div className="flex space-x-4">
@@ -70,7 +74,7 @@ export default function Navbar() {
                     className={classNames(
                       item.current
                         ? 'bg-gray-900 text-white dark:bg-gray-950/50'
-                        : 'text-gray-300 hover:bg-white/5 hover:text-white',
+                        : 'text-white hover:bg-white/5 hover:text-gray-800',
                       'rounded-md px-3 py-2 text-sm font-medium',
                     )}
                   >
@@ -81,13 +85,20 @@ export default function Navbar() {
             </div>
           </div>
           <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
+            {/* Shopping Cart Icon */}
             <button
               type="button"
-              className="relative rounded-full p-1 text-gray-400 focus:outline-2 focus:outline-offset-2 focus:outline-indigo-500 dark:hover:text-white"
+              onClick={() => router.push('/basket')}
+              className="relative rounded-full p-1 text-white focus:outline-2 focus:outline-offset-2 focus:outline-indigo-500 dark:hover:text-white mr-3"
             >
               <span className="absolute -inset-1.5" />
-              <span className="sr-only">View notifications</span>
-              <BellIcon aria-hidden="true" className="size-6" />
+              <span className="sr-only">View shopping cart</span>
+              <ShoppingCartIcon aria-hidden="true" className="size-6" />
+              {basketItemsCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                  {basketItemsCount > 99 ? '99+' : basketItemsCount}
+                </span>
+              )}
             </button>
 
             {/* Profile dropdown */}

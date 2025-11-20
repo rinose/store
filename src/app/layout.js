@@ -1,6 +1,7 @@
 'use client';
 import { Geist, Geist_Mono } from "next/font/google";
 import NavBar from "../components/navbar";
+import { BasketProvider } from "../contexts/BasketContext";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -24,8 +25,10 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <NavBar />
-        {children}
+        <BasketProvider>
+          <NavBar />
+          {children}
+        </BasketProvider>
       </body>
     </html>
   );

@@ -24,6 +24,16 @@
 .DS_Store
 *.pem
 
+# local images (use Firebase Storage instead)
+images/
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.webp
+*.bmp
+*.tiff
+
 # debug
 npm-debug.log*
 yarn-debug.log*
