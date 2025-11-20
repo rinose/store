@@ -34,14 +34,14 @@ export default function Home() {
             Benvenuti da <span className="text-brand-gold">Cristofaro</span>
           </h1>
           <p className="text-xl md:text-2xl text-gray-200 mb-12 max-w-3xl mx-auto leading-relaxed">
-            Un viaggio culinario autentico dove tradizione e passione si incontrano in ogni piatto
+            L'arte della pasticceria artigianale dove dolcezza e maestria creano emozioni uniche
           </p>
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
             <Link
               href="/products"
               className="bg-brand-gold hover:bg-brand-gold-light text-brand-black px-8 py-4 rounded-full text-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
             >
-              Scopri i Nostri Prodotti
+              Scopri le Nostre Creazioni
             </Link>
             <Link
               href="/categories"
@@ -77,13 +77,13 @@ export default function Home() {
                 La Nostra <span className="text-brand-gold">Storia</span>
               </h2>
               <p className="text-gray-300 text-lg leading-relaxed mb-6">
-                Con anni di esperienza e una passione innata per l'arte culinaria, 
-                Chef Cristofaro porta sulle vostre tavole il meglio della tradizione 
-                gastronomica italiana.
+                Con anni di esperienza e una passione innata per l'arte dolciaria, 
+                Chef Cristofaro crea dolci che incantano i sensi e conquistano il cuore, 
+                portando nelle vostre case il meglio della pasticceria artigianale italiana.
               </p>
               <p className="text-gray-300 text-lg leading-relaxed mb-8">
-                Ogni prodotto è selezionato con cura, ogni ricetta è un omaggio 
-                alla qualità e all'autenticità dei sapori che rendono unica la nostra cucina.
+                Ogni ingrediente è selezionato con cura, ogni ricetta è un capolavoro 
+                di dolcezza e dedizione, un perfetto equilibrio tra tradizione e innovazione.
               </p>
               <Link
                 href="/products"
@@ -107,24 +107,24 @@ export default function Home() {
           </h2>
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             <div className="bg-brand-black p-8 rounded-2xl shadow-xl hover:shadow-2xl transition-shadow border border-brand-gold/20">
-              <div className="text-brand-gold text-5xl mb-4">🍝</div>
-              <h3 className="text-2xl font-bold text-white mb-4">Qualità Superiore</h3>
+              <div className="text-brand-gold text-5xl mb-4">🍰</div>
+              <h3 className="text-2xl font-bold text-white mb-4">Ingredienti Premium</h3>
               <p className="text-gray-300 leading-relaxed">
-                Ingredienti selezionati con cura per garantire il massimo della qualità e del gusto in ogni prodotto.
+                Solo i migliori ingredienti selezionati per creare dolci di eccellenza, dal sapore autentico e indimenticabile.
               </p>
             </div>
             <div className="bg-brand-black p-8 rounded-2xl shadow-xl hover:shadow-2xl transition-shadow border border-brand-gold/20">
               <div className="text-brand-gold text-5xl mb-4">👨‍🍳</div>
-              <h3 className="text-2xl font-bold text-white mb-4">Tradizione Autentica</h3>
+              <h3 className="text-2xl font-bold text-white mb-4">Maestria Artigianale</h3>
               <p className="text-gray-300 leading-relaxed">
-                Ricette tramandate e perfezionate nel tempo, per portare in tavola il vero sapore della tradizione.
+                Ricette della tradizione pasticcera italiana, perfezionate con tecnica e creatività per dolci unici.
               </p>
             </div>
             <div className="bg-brand-black p-8 rounded-2xl shadow-xl hover:shadow-2xl transition-shadow border border-brand-gold/20">
-              <div className="text-brand-gold text-5xl mb-4">💝</div>
-              <h3 className="text-2xl font-bold text-white mb-4">Passione Artigianale</h3>
+              <div className="text-brand-gold text-5xl mb-4">✨</div>
+              <h3 className="text-2xl font-bold text-white mb-4">Creazioni Uniche</h3>
               <p className="text-gray-300 leading-relaxed">
-                Ogni piatto è preparato con dedizione e amore, come si fa nelle migliori cucine italiane.
+                Ogni dolce è una creazione artigianale preparata con amore e dedizione per regalare momenti di pura dolcezza.
               </p>
             </div>
           </div>
@@ -138,7 +138,7 @@ export default function Home() {
             Pronto a <span className="text-brand-gold">Gustare</span> l'Eccellenza?
           </h2>
           <p className="text-xl text-gray-300 mb-12 max-w-2xl mx-auto">
-            Esplora il nostro menu e ordina i tuoi piatti preferiti. La qualità ti aspetta!
+            Scopri le nostre delizie dolciarie e ordina le tue prelibatezze preferite. La dolcezza ti aspetta!
           </p>
           <Link
             href="/products"
