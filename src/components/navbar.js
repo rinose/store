@@ -20,7 +20,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const navigation = [
     { name: 'Prodotti', href: '/products', current: pathname === "/products" },
-    { name: 'Categorie', href: '/categories', current: pathname === "/categories" },
+    //{ name: 'Categorie', href: '/categories', current: pathname === "/categories" },
     { name: 'Admin', href: '/admin', current: pathname === "/admin" },
   ]
 
