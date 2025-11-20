@@ -43,13 +43,13 @@ export default function Navbar() {
   return (
     <Disclosure
       as="nav"
-      className="relative bg-gray-800 dark:bg-gray-800/50 dark:after:pointer-events-none dark:after:absolute dark:after:inset-x-0 dark:after:bottom-0 dark:after:h-px dark:after:bg-white/10"
+      className="relative bg-[color:#aa8510] mx-auto w-4/5 my-2 rounded-full dark:bg-gray-800/50 dark:after:pointer-events-none dark:after:absolute dark:after:inset-x-0 dark:after:bottom-0 dark:after:h-px dark:after:bg-white/10"
     >
       <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
         <div className="relative flex h-16 items-center justify-between">
           <div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
             {/* Mobile menu button*/}
-            <DisclosureButton className="group relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-white/5 hover:text-white focus:outline-2 focus:-outline-offset-1 focus:outline-indigo-500">
+            <DisclosureButton className="group relative inline-flex items-center justify-center rounded-md p-2 text-white hover:bg-white/5 hover:text-gray-800 focus:outline-2 focus:-outline-offset-1 focus:outline-indigo-500">
               <span className="absolute -inset-0.5" />
               <span className="sr-only">Open main menu</span>
               <Bars3Icon aria-hidden="true" className="block size-6 group-data-open:hidden" />
@@ -60,8 +60,8 @@ export default function Navbar() {
             <div className="flex shrink-0 items-center">
               <img
                 alt="Store.com Logo"
-                src="/images/vercel.svg"
-                className="h-8 w-auto"
+                src="/images/logo_gold.jpg"
+                className="h-10 w-auto"
               />
             </div>
             <div className="hidden sm:ml-6 sm:block">
@@ -74,7 +74,7 @@ export default function Navbar() {
                     className={classNames(
                       item.current
                         ? 'bg-gray-900 text-white dark:bg-gray-950/50'
-                        : 'text-gray-300 hover:bg-white/5 hover:text-white',
+                        : 'text-white hover:bg-white/5 hover:text-gray-800',
                       'rounded-md px-3 py-2 text-sm font-medium',
                     )}
                   >
