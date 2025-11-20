@@ -154,24 +154,19 @@ const ProductPage = () => {
           </div>
 
           <button
-            onClick={clearFilters}
-            className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors text-sm"
+            onClick={() => setShowFilters(!showFilters)}
+            className="px-4 py-2 bg-[#aa8510] text-white rounded-md hover:bg-[#8a6a00] transition-colors text-sm flex items-center gap-2"
           >
-            Pulisci filtri
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
+            </svg>
+
           </button>
         </div>
 
-        {/* Tags Filter Bar - Always Visible */}
-        {availableTags.length > 0 && (
-          <div className="border-t pt-4">
-            <div className="flex items-center gap-3 mb-3">
-              <h3 className="text-sm font-medium text-gray-700">Filtra per tags:</h3>
-              {selectedTags.length > 0 && (
-                <span className="text-xs text-blue-600">
-                  ({selectedTags.length} {selectedTags.length === 1 ? 'tag selezionato' : 'tags selezionati'})
-                </span>
-              )}
-            </div>
+        {/* Tags Filter Bar - Conditional */}
+        {showFilters && availableTags.length > 0 && (
+          <div className="pt-2">
             <div className="flex flex-wrap gap-2">
               {availableTags.map(tag => (
                 <button
@@ -193,47 +188,18 @@ const ProductPage = () => {
             </div>
           </div>
         )}
-
-        {(selectedTags.length > 0 || searchTerm.trim()) && (
-          <div className="flex items-center gap-4 flex-wrap">
-            <div className="flex items-center gap-2 py-2 flex-wrap">
-              <span className="text-sm text-gray-600">Filtri attivi:</span>
-              {searchTerm.trim() && (
-                <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
-                  Ricerca: "{searchTerm}"
-                </span>
-              )}
-              {selectedTags.map(tag => (
-                <span
-                  key={tag}
-                  className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded flex items-center gap-1"
-                >
-                  {tag}
-                  <button
-                    onClick={() => handleTagToggle(tag)}
-                    className="text-blue-600 hover:text-blue-800"
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
         {
           ( filteredProducts.length < products.length ) && (
-          <div className="flex justify-between py-2items-center">
+          <div className="flex justify-between py-2 items-center">
             <p className="text-gray-600">
-              {filteredProducts.length} di {products.length} prodotti
+              {filteredProducts.length} di {products.length} prodotti trovati
             </p>
           </div>
           )
         }
       </div>
-
-      
       {filteredProducts.length === 0 ? (
-        <div className="text-center py-8">
+        <div className="text-center py-2">
           <p className="text-gray-500">
             {products.length === 0 
               ? "Nessun prodotto trovato." 
@@ -242,10 +208,10 @@ const ProductPage = () => {
           </p>
           {(selectedTags.length > 0 || searchTerm.trim()) && (
             <button
-              onClick={clearFilters}
-              className="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+              onClick={() => setShowFilters(!showFilters)}
+              className="mt-2 bg-[#aa8510] text-white px-4 py-2 rounded hover:bg-[#8a6a00] flex items-center gap-2 mx-auto"
             >
-              Rimuovi filtri
+              {showFilters ? '▲ Nascondi filtri' : '▼ Mostra filtri'}
             </button>
           )}
         </div>
@@ -296,7 +262,7 @@ const ProductPage = () => {
               {/* Product Content - Flexible grow */}
               <div className="p-6 flex flex-col flex-1">
                 {/* Product Name - Always present */}
-                <h3 className="text-lg font-semibold mb-2 line-clamp-2 min-h-[3.5rem]">{product.name}</h3>
+                <h3 className="text-lg color-brand-black font-semibold mb-2 line-clamp-2 min-h-[3.5rem]">{product.name}</h3>
                 
                 {/* Description - Fixed height space */}
                 <div className="mb-3 min-h-[2.5rem]">
