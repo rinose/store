@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { storage } from '../../../firebase';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 
 const AdminProductsPage = () => {
   const [products, setProducts] = useState([]);
@@ -11,6 +13,10 @@ const AdminProductsPage = () => {
   const [editingPrice, setEditingPrice] = useState({}); // Track which product prices are being edited
   const [editingCategory, setEditingCategory] = useState({}); // Track which product categories are being edited
   const [editingIngredients, setEditingIngredients] = useState({}); // Track which product ingredients are being edited
+  const [editingImage, setEditingImage] = useState({}); // Track which product images are being edited
+  const [editingImageFiles, setEditingImageFiles] = useState({}); // Track selected files for editing
+  const [editingImagePreviews, setEditingImagePreviews] = useState({}); // Track previews for editing
+  const [uploadingEditImages, setUploadingEditImages] = useState({}); // Track upload status for editing
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -20,9 +26,59 @@ const AdminProductsPage = () => {
     ingredients: ''
   });
 
-  // Fetch products on component mount
+  // Image upload states
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState('');
+
+  // Test Firebase Storage connectivity
+  const testFirebaseStorage = async () => {
+    try {
+      console.log('🔥 Testing Firebase Storage connectivity...');
+      console.log('🔧 Storage configuration:', {
+        bucket: storage.app.options.storageBucket,
+        projectId: storage.app.options.projectId
+      });
+      
+      const testRef = ref(storage, 'test/connectivity_test.txt');
+      const testData = new Blob(['test connection from admin panel'], { type: 'text/plain' });
+      
+      console.log('📤 Attempting test upload...');
+      const snapshot = await uploadBytes(testRef, testData);
+      console.log('✅ Firebase Storage test upload successful!', snapshot);
+      
+      const downloadURL = await getDownloadURL(testRef);
+      console.log('🔗 Firebase Storage test download URL:', downloadURL);
+      
+      console.log('🎉 Firebase Storage is working correctly!');
+      return true;
+    } catch (error) {
+      console.error('❌ Firebase Storage test failed:', error);
+      console.error('📋 Error details:', {
+        code: error.code,
+        message: error.message,
+        serverResponse: error.serverResponse,
+        customData: error.customData
+      });
+      
+      // Provide specific guidance based on error code
+      if (error.code === 'storage/unauthorized') {
+        console.error('🚫 UNAUTHORIZED: Firebase Storage rules are blocking uploads');
+        console.error('💡 Solution: Update Firebase Storage rules to allow uploads');
+      } else if (error.code === 'storage/unknown') {
+        console.error('❓ UNKNOWN ERROR: Possible network or configuration issue');
+      } else if (error.code === 'storage/retry-limit-exceeded') {
+        console.error('⏰ TIMEOUT: Upload took too long');
+      }
+      
+      return false;
+    }
+  };
+
+  // Run connectivity test on component mount
   useEffect(() => {
-    fetchProducts();
+    testFirebaseStorage();
   }, []);
 
   const fetchProducts = async () => {
@@ -52,6 +108,186 @@ const AdminProductsPage = () => {
     }));
   };
 
+  const compressImage = (file, maxSizeMB = 1) => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      img.onload = () => {
+        // Calculate new dimensions (max 1200px width/height)
+        const maxDim = 1200;
+        let { width, height } = img;
+        
+        if (width > height && width > maxDim) {
+          height = (height * maxDim) / width;
+          width = maxDim;
+        } else if (height > maxDim) {
+          width = (width * maxDim) / height;
+          height = maxDim;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Draw and compress
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        canvas.toBlob((blob) => {
+          // Create a File object with proper name and type
+          const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), {
+            type: 'image/jpeg',
+            lastModified: Date.now()
+          });
+          resolve(compressedFile);
+        }, 'image/jpeg', 0.8); // 80% quality
+      };
+      
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  const handleImageChange = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    // Validate each file
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    const maxSize = 10 * 1024 * 1024; // 10MB (before compression)
+    
+    const validFiles = [];
+    const invalidFiles = [];
+    
+    files.forEach(file => {
+      if (!validTypes.includes(file.type)) {
+        invalidFiles.push(`${file.name}: formato non supportato`);
+        return;
+      }
+      
+      if (file.size > maxSize) {
+        invalidFiles.push(`${file.name}: file troppo grande (max 10MB)`);
+        return;
+      }
+      
+      validFiles.push(file);
+    });
+
+    if (invalidFiles.length > 0) {
+      setError(`File non validi:\n${invalidFiles.join('\n')}`);
+    }
+    
+    if (validFiles.length === 0) {
+      return;
+    }
+
+    try {
+      setUploadProgress('Elaborazione e compressione immagini...');
+      
+      // Compress images before storing
+      const compressedFiles = await Promise.all(validFiles.map(file => compressImage(file)));
+      setSelectedImages(compressedFiles);
+      
+      // Create previews for all compressed files
+      const previews = [];
+      compressedFiles.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          previews[index] = e.target.result;
+          if (previews.filter(p => p).length === compressedFiles.length) {
+            setImagePreviews([...previews]);
+            setUploadProgress('');
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+    } catch (compressionError) {
+      console.error('Error compressing images:', compressionError);
+      setError('Errore durante la compressione delle immagini: ' + compressionError.message);
+      setUploadProgress('');
+    }
+    
+    // Clear any existing errors if we have valid files
+    if (validFiles.length > 0) {
+      setError(null);
+    }
+  };
+
+  const uploadImagesToStorage = async (files, productName) => {
+    console.log('🚀 Starting upload process...', { filesCount: files.length, productName });
+    
+    try {
+      const uploadPromises = files.map(async (file, index) => {
+        console.log(`📤 Uploading file ${index + 1}/${files.length}:`, {
+          name: file.name,
+          size: `${(file.size / 1024 / 1024).toFixed(2)}MB`,
+          type: file.type
+        });
+        
+        // Create a unique filename
+        const timestamp = Date.now();
+        const filename = `products/${productName.replace(/[^a-zA-Z0-9]/g, '_')}_${timestamp}_${index}.${file.name.split('.').pop()}`;
+        
+        console.log('📝 Generated filename:', filename);
+        
+        const storageRef = ref(storage, filename);
+        console.log('📍 Storage reference created:', storageRef.toString());
+        
+        // Upload file
+        console.log('⏳ Uploading to Firebase Storage...');
+        const snapshot = await uploadBytes(storageRef, file);
+        console.log('✅ Upload completed successfully!', {
+          bytesTransferred: snapshot.metadata.size,
+          fullPath: snapshot.metadata.fullPath
+        });
+        
+        // Get download URL
+        console.log('🔗 Getting download URL...');
+        const downloadURL = await getDownloadURL(snapshot.ref);
+        console.log('✅ Download URL obtained:', downloadURL);
+        
+        return downloadURL;
+      });
+      
+      console.log('⏳ Waiting for all uploads to complete...');
+      const imageUrls = await Promise.all(uploadPromises);
+      console.log('🎉 All uploads completed successfully!', {
+        count: imageUrls.length,
+        urls: imageUrls
+      });
+      
+      return imageUrls;
+    } catch (error) {
+      console.error('💥 Error uploading images:', error);
+      console.error('📋 Detailed error information:', {
+        message: error.message,
+        code: error.code,
+        stack: error.stack,
+        serverResponse: error.serverResponse
+      });
+      
+      // Provide specific error messages
+      let userMessage = 'Errore durante il caricamento delle immagini: ';
+      if (error.code === 'storage/unauthorized') {
+        userMessage += 'Permessi insufficienti. Contatta l\'amministratore.';
+      } else if (error.code === 'storage/quota-exceeded') {
+        userMessage += 'Spazio di archiviazione esaurito.';
+      } else if (error.code === 'storage/retry-limit-exceeded') {
+        userMessage += 'Timeout di caricamento. Riprova con immagini più piccole.';
+      } else {
+        userMessage += error.message;
+      }
+      
+      throw new Error(userMessage);
+    }
+  };
+
+  const clearImageSelection = () => {
+    setSelectedImages([]);
+    setImagePreviews([]);
+    setUploadingImages(false);
+    setUploadProgress('');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -64,6 +300,38 @@ const AdminProductsPage = () => {
       setCreating(true);
       setError(null);
 
+      let imageUrls = [];
+      
+      // Upload images if selected
+      if (selectedImages.length > 0) {
+        console.log('Starting image upload process...', selectedImages);
+        setUploadingImages(true);
+        setUploadProgress('Caricamento immagini in corso...');
+        
+        try {
+          imageUrls = await Promise.race([
+            uploadImagesToStorage(selectedImages, formData.name),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Timeout: Upload took too long')), 60000)
+            )
+          ]);
+          console.log('Image upload completed successfully:', imageUrls);
+          setUploadProgress('Immagini caricate, salvando prodotto...');
+        } catch (imageError) {
+          console.error('Image upload failed:', imageError);
+          setError(imageError.message);
+          setCreating(false);
+          setUploadingImages(false);
+          setUploadProgress('');
+          return;
+        }
+      }
+
+      console.log('Sending product data to API...', {
+        name: formData.name,
+        imageUrls: imageUrls
+      });
+
       const response = await fetch('/api/products', {
         method: 'POST',
         headers: {
@@ -75,11 +343,22 @@ const AdminProductsPage = () => {
           price: formData.price ? parseFloat(formData.price) : undefined,
           category: formData.category || undefined,
           tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [],
-          ingredients: formData.ingredients || undefined
+          ingredients: formData.ingredients || undefined,
+          imageUrls: imageUrls
         })
       });
 
+      console.log('API Response status:', response.status);
+      
+      if (!response.ok) {
+        console.error('API response not ok:', response.status, response.statusText);
+        const errorText = await response.text();
+        console.error('API error response:', errorText);
+        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      }
+
       const result = await response.json();
+      console.log('API Response:', result);
 
       if (result.success) {
         // Reset form
@@ -91,6 +370,10 @@ const AdminProductsPage = () => {
           tags: '',
           ingredients: ''
         });
+        
+        // Clear image selection
+        clearImageSelection();
+        setUploadProgress('');
         
         // Refresh products list
         await fetchProducts();
@@ -104,6 +387,8 @@ const AdminProductsPage = () => {
       setError('Errore di rete: ' + err.message);
     } finally {
       setCreating(false);
+      setUploadingImages(false);
+      setUploadProgress('');
     }
   };
 
@@ -358,6 +643,171 @@ const AdminProductsPage = () => {
     });
   };
 
+  // Image editing functions
+  const handleEditImage = (productId, currentImageUrl) => {
+    setEditingImage({
+      ...editingImage,
+      [productId]: true // Just track that we're editing this product's image
+    });
+    // Clear any existing files and previews for this product
+    const newEditingFiles = { ...editingImageFiles };
+    const newEditingPreviews = { ...editingImagePreviews };
+    delete newEditingFiles[productId];
+    delete newEditingPreviews[productId];
+    setEditingImageFiles(newEditingFiles);
+    setEditingImagePreviews(newEditingPreviews);
+  };
+
+  const handleCancelEditImage = (productId) => {
+    const newEditingImage = { ...editingImage };
+    const newEditingFiles = { ...editingImageFiles };
+    const newEditingPreviews = { ...editingImagePreviews };
+    const newUploadingEdit = { ...uploadingEditImages };
+    
+    delete newEditingImage[productId];
+    delete newEditingFiles[productId];
+    delete newEditingPreviews[productId];
+    delete newUploadingEdit[productId];
+    
+    setEditingImage(newEditingImage);
+    setEditingImageFiles(newEditingFiles);
+    setEditingImagePreviews(newEditingPreviews);
+    setUploadingEditImages(newUploadingEdit);
+  };
+
+  const handleEditImageFileChange = async (productId, event) => {
+    const files = Array.from(event.target.files);
+    if (files.length === 0) return;
+
+    // Validate each file
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    
+    const validFiles = [];
+    const invalidFiles = [];
+    
+    files.forEach(file => {
+      if (!validTypes.includes(file.type)) {
+        invalidFiles.push(`${file.name}: formato non supportato`);
+        return;
+      }
+      
+      if (file.size > maxSize) {
+        invalidFiles.push(`${file.name}: file troppo grande (max 10MB)`);
+        return;
+      }
+      
+      validFiles.push(file);
+    });
+
+    if (invalidFiles.length > 0) {
+      setError(`File non validi:\n${invalidFiles.join('\n')}`);
+    }
+    
+    if (validFiles.length === 0) {
+      return;
+    }
+
+    try {
+      // Compress images before storing
+      const compressedFiles = await Promise.all(validFiles.map(file => compressImage(file)));
+
+      // Store files for this product
+      setEditingImageFiles({
+        ...editingImageFiles,
+        [productId]: compressedFiles
+      });
+      
+      // Create previews for all valid files
+      const previews = [];
+      compressedFiles.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          previews[index] = e.target.result;
+          if (previews.filter(p => p).length === compressedFiles.length) {
+            setEditingImagePreviews({
+              ...editingImagePreviews,
+              [productId]: [...previews]
+            });
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+    } catch (compressionError) {
+      console.error('Error compressing images:', compressionError);
+      setError('Errore durante la compressione delle immagini: ' + compressionError.message);
+    }
+    
+    // Clear any existing errors if we have valid files
+    if (validFiles.length > 0) {
+      setError(null);
+    }
+  };
+
+  const handleSaveImage = async (productId, productName) => {
+    try {
+      setError(null);
+      
+      // Check if files were selected for upload
+      const selectedFiles = editingImageFiles[productId];
+      
+      if (!selectedFiles || selectedFiles.length === 0) {
+        setError('Seleziona almeno un\'immagine da caricare');
+        return;
+      }
+
+      // Set uploading state
+      setUploadingEditImages({
+        ...uploadingEditImages,
+        [productId]: true
+      });
+
+      // Upload images to Firebase Storage
+      let imageUrls = [];
+      try {
+        imageUrls = await uploadImagesToStorage(selectedFiles, productName);
+      } catch (uploadError) {
+        setError(uploadError.message);
+        setUploadingEditImages({
+          ...uploadingEditImages,
+          [productId]: false
+        });
+        return;
+      }
+
+      // Update product with new image URLs
+      const response = await fetch(`/api/products?id=${productId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ imageUrls: imageUrls })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Remove from editing state
+        handleCancelEditImage(productId);
+        
+        // Refresh products list
+        await fetchProducts();
+        
+        // Show success message
+        alert(`Immagini per "${productName}" aggiornate con successo!`);
+      } else {
+        setError(result.error || 'Errore durante l\'aggiornamento delle immagini');
+      }
+    } catch (err) {
+      setError('Errore di rete: ' + err.message);
+    } finally {
+      setUploadingEditImages({
+        ...uploadingEditImages,
+        [productId]: false
+      });
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-6">
       <h1 className="text-3xl font-bold mb-8">Gestione Prodotti - Admin</h1>
@@ -470,13 +920,68 @@ const AdminProductsPage = () => {
             <p className="text-xs text-gray-500 mt-1">Elenca tutti gli ingredienti del prodotto</p>
           </div>
 
+          <div>
+            <label htmlFor="productImage" className="block text-sm font-medium text-gray-700 mb-1">
+              Immagini Prodotto
+            </label>
+            <input
+              type="file"
+              id="productImage"
+              accept="image/*"
+              multiple
+              onChange={handleImageChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Formati supportati: JPG, PNG, GIF, WebP (max 10MB per file). 
+              Puoi selezionare più immagini. Le immagini saranno automaticamente compresse e ottimizzate.
+            </p>
+            
+            {imagePreviews.length > 0 && (
+              <div className="mt-2">
+                <p className="text-sm font-medium text-gray-700 mb-2">Anteprima immagini ({imagePreviews.length})</p>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {imagePreviews.map((preview, index) => (
+                    <div key={index} className="relative">
+                      <img
+                        src={preview}
+                        alt={`Anteprima ${index + 1}`}
+                        className="w-full h-24 object-cover rounded-md border"
+                      />
+                      <div className="mt-1">
+                        <p className="text-xs text-gray-600 truncate">{selectedImages[index]?.name}</p>
+                        <p className="text-xs text-gray-400">
+                          {selectedImages[index] && (selectedImages[index].size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={clearImageSelection}
+                  className="mt-2 text-xs text-red-600 hover:text-red-800"
+                >
+                  Rimuovi tutte le immagini
+                </button>
+              </div>
+            )}
+          </div>
+
           <button
             type="submit"
-            disabled={creating}
+            disabled={creating || uploadingImages}
             className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
-            {creating ? 'Creazione in corso...' : 'Aggiungi Prodotto'}
+            {uploadingImages ? uploadProgress || 'Caricamento immagini...' : creating ? 'Creazione in corso...' : 'Aggiungi Prodotto'}
           </button>
+          
+          {/* Progress indicator */}
+          {uploadProgress && (
+            <div className="mt-2 text-sm text-blue-600 text-center">
+              {uploadProgress}
+            </div>
+          )}
         </form>
       </div>
 
@@ -511,6 +1016,7 @@ const AdminProductsPage = () => {
                   <th className="px-4 py-2 text-left font-medium text-gray-700">Categoria</th>
                   <th className="px-4 py-2 text-left font-medium text-gray-700">Tags</th>
                   <th className="px-4 py-2 text-left font-medium text-gray-700">Ingredienti</th>
+                  <th className="px-4 py-2 text-left font-medium text-gray-700">Immagine</th>
                   <th className="px-4 py-2 text-left font-medium text-gray-700">Azioni</th>
                 </tr>
               </thead>
@@ -707,6 +1213,117 @@ const AdminProductsPage = () => {
                             onClick={() => handleEditIngredients(product.id, product.ingredients)}
                             className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"
                             title="Modifica ingredienti"
+                          >
+                            ✏️
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-2">
+                      {editingImage[product.id] ? (
+                        <div className="flex flex-col gap-2">
+                          <div className="flex gap-2 items-center">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              multiple
+                              onChange={(e) => handleEditImageFileChange(product.id, e)}
+                              className="flex-1 text-xs border border-gray-300 rounded px-2 py-1 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-blue-50 file:text-blue-700"
+                            />
+                            <div className="flex flex-col gap-1">
+                              <button
+                                onClick={() => handleSaveImage(product.id, product.name)}
+                                disabled={!editingImageFiles[product.id] || uploadingEditImages[product.id]}
+                                className="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600 disabled:bg-gray-400"
+                                title="Carica e salva immagini"
+                              >
+                                {uploadingEditImages[product.id] ? '⏳' : '✓'}
+                              </button>
+                              <button
+                                onClick={() => handleCancelEditImage(product.id)}
+                                className="bg-gray-500 text-white px-2 py-1 rounded text-xs hover:bg-gray-600"
+                                title="Annulla"
+                              >
+                                ✗
+                              </button>
+                            </div>
+                          </div>
+                          
+                          {/* Image previews */}
+                          {editingImagePreviews[product.id] && editingImagePreviews[product.id].length > 0 && (
+                            <div className="grid grid-cols-3 gap-2">
+                              {editingImagePreviews[product.id].map((preview, index) => (
+                                <div key={index} className="relative">
+                                  <img
+                                    src={preview}
+                                    alt={`Preview ${index + 1}`}
+                                    className="w-16 h-16 object-cover rounded border"
+                                  />
+                                  <div className="text-xs text-gray-600 mt-1 truncate">
+                                    {editingImageFiles[product.id]?.[index]?.name}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="flex gap-2 items-center">
+                          <div className="flex-1">
+                            {(() => {
+                              // Support both new imageUrls array and legacy imageUrl
+                              const images = product.imageUrls && product.imageUrls.length > 0 
+                                ? product.imageUrls 
+                                : (product.imageUrl ? [product.imageUrl] : []);
+                              
+                              if (images.length === 0) {
+                                return <span className="text-gray-400 text-xs">Nessuna immagine</span>;
+                              }
+                              
+                              if (images.length === 1) {
+                                return (
+                                  <div className="flex items-center gap-2">
+                                    <img
+                                      src={images[0]}
+                                      alt={product.name}
+                                      className="w-12 h-12 object-cover rounded border"
+                                      onError={(e) => {
+                                        e.target.style.display = 'none';
+                                        e.target.nextSibling.style.display = 'block';
+                                      }}
+                                    />
+                                    <span className="text-xs text-red-500 hidden">Errore caricamento</span>
+                                  </div>
+                                );
+                              }
+                              
+                              // Multiple images - show count and first image
+                              return (
+                                <div className="flex items-center gap-2">
+                                  <div className="relative">
+                                    <img
+                                      src={images[0]}
+                                      alt={product.name}
+                                      className="w-12 h-12 object-cover rounded border"
+                                      onError={(e) => {
+                                        e.target.style.display = 'none';
+                                        e.target.nextSibling.style.display = 'block';
+                                      }}
+                                    />
+                                    <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                      {images.length}
+                                    </span>
+                                  </div>
+                                  <span className="text-xs text-gray-600">{images.length} immagini</span>
+                                  <span className="text-xs text-red-500 hidden">Errore caricamento</span>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                          <button
+                            onClick={() => handleEditImage(product.id, product.imageUrl || (product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls[0] : ''))}
+                            className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"
+                            title="Modifica immagine"
                           >
                             ✏️
                           </button>
