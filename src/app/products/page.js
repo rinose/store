@@ -140,33 +140,38 @@ const ProductPage = () => {
   return (
     <div className="container mx-auto px-2 py-4">
       <div className="bg-white shadow-md rounded-lg p-3 mb-6">
-        <div className="flex gap-4 items-start mb-4">
-          <div className="flex-shrink-0 md:w-1/3">
+        {/* Search Bar */}
+        <div className="flex gap-4 items-center mb-4">
+          <div className="flex-1">
             <input
               type="text"
               id="search"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Inserisci termini di ricerca..."
+              placeholder="Cerca prodotti per nome, descrizione o categoria..."
             />
           </div>
 
-          <div className="ml-auto">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="px-4 py-2 bg-brand-gold text-white rounded-full hover:bg-brand-black transition-colors flex items-center gap-2"
-            >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
-            </svg>
-
-            </button>
-          </div>
+          <button
+            onClick={clearFilters}
+            className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors text-sm"
+          >
+            Pulisci filtri
+          </button>
         </div>
 
-        {showFilters && availableTags.length > 0 && (
-          <div className="m2-4 pt-2">
+        {/* Tags Filter Bar - Always Visible */}
+        {availableTags.length > 0 && (
+          <div className="border-t pt-4">
+            <div className="flex items-center gap-3 mb-3">
+              <h3 className="text-sm font-medium text-gray-700">Filtra per tags:</h3>
+              {selectedTags.length > 0 && (
+                <span className="text-xs text-blue-600">
+                  ({selectedTags.length} {selectedTags.length === 1 ? 'tag selezionato' : 'tags selezionati'})
+                </span>
+              )}
+            </div>
             <div className="flex flex-wrap gap-2">
               {availableTags.map(tag => (
                 <button
@@ -174,11 +179,15 @@ const ProductPage = () => {
                   onClick={() => handleTagToggle(tag)}
                   className={`px-3 py-1 text-sm rounded-full border transition-colors ${
                     selectedTags.includes(tag)
-                      ? 'bg-blue-500 text-white border-blue-500'
-                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                      ? 'bg-blue-500 text-white border-blue-500 shadow-sm'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-blue-50 hover:border-blue-300'
                   }`}
+                  title={`Clicca per ${selectedTags.includes(tag) ? 'rimuovere' : 'aggiungere'} il filtro "${tag}"`}
                 >
                   {tag}
+                  {selectedTags.includes(tag) && (
+                    <span className="ml-1 text-xs">✕</span>
+                  )}
                 </button>
               ))}
             </div>

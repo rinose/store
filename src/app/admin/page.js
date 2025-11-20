@@ -1,14 +1,20 @@
 "use client";
 
-import React from 'react';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 const AdminPage = () => {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Redirect to products page by default
+    router.replace('/admin/products');
+  }, [router]);
+
   return (
-    <>
-      <div className="container mx-auto px-4 py-6">
-        <h1 className="text-2xl font-bold mb-6">Admin Page</h1>
-      </div>
-    </>
+    <div className="flex justify-center items-center h-32">
+      <div className="text-lg text-gray-600">Reindirizzamento...</div>
+    </div>
   );
 };
 
