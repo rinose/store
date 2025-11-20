@@ -148,7 +148,7 @@ const ProductPage = () => {
               id="search"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 text-gray-500 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Cerca prodotti per nome, descrizione o categoria..."
             />
           </div>
@@ -262,7 +262,7 @@ const ProductPage = () => {
               {/* Product Content - Flexible grow */}
               <div className="p-6 flex flex-col flex-1">
                 {/* Product Name - Always present */}
-                <h3 className="text-lg color-brand-black font-semibold mb-2 line-clamp-2 min-h-[3.5rem]">{product.name}</h3>
+                <h3 className="text-lg text-brand-black font-semibold mb-2 line-clamp-2 min-h-[3.5rem]">{product.name}</h3>
                 
                 {/* Description - Fixed height space */}
                 <div className="mb-3 min-h-[2.5rem]">

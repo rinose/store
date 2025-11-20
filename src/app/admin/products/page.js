@@ -922,12 +922,12 @@ const AdminProductsPage = () => {
   };
 
   return (
-    <>
-      <h1 className="text-3xl font-bold mb-8">Gestione Prodotti</h1>
+    <div className="dark:text-gray-500">
+      <h1 className="text-3xl font-bold mb-8 dark:text-gray-400">Gestione Prodotti</h1>
 
       {/* Form for adding new product */}
       <div className="bg-white shadow-lg rounded-lg p-6 mb-8">
-        <h2 className="text-xl font-semibold mb-4">Aggiungi Nuovo Prodotto</h2>
+        <h2 className="text-xl font-semibold mb-4 dark:text-gray-400">Aggiungi Nuovo Prodotto</h2>
         
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -1084,7 +1084,7 @@ const AdminProductsPage = () => {
           <button
             type="submit"
             disabled={creating || uploadingImages}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="w-full bg-brand-gold text-white py-2 px-4 rounded-md hover:bg-brand-gold-dark focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
             {uploadingImages ? uploadProgress || 'Caricamento immagini...' : creating ? 'Creazione in corso...' : 'Aggiungi Prodotto'}
           </button>
@@ -1545,7 +1545,7 @@ const AdminProductsPage = () => {
           </p>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
