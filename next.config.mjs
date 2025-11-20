@@ -1,19 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Explicitly disable turbo to avoid WASM binding issues
-  experimental: {
-    turbo: false,
-  },
+  ///experimental: {
+  //  turbo: false,
+  //},
   
   // Webpack configuration
-  webpack: (config, { isServer }) => {
+  //webpack: (config, { isServer }) => {
     // Handle Firebase on server side
-    if (isServer) {
-      config.externals = [...(config.externals || []), 'firebase/app'];
-    }
+  //  if (isServer) {
+   //   config.externals = [...(config.externals || []), 'firebase/app'];
+   // }
     
-    return config;
-  },
+   // return config;
+  //},
 };
 
 export default nextConfig;
