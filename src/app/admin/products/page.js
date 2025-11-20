@@ -13,6 +13,8 @@ const AdminProductsPage = () => {
   const [editingPrice, setEditingPrice] = useState({}); // Track which product prices are being edited
   const [editingCategory, setEditingCategory] = useState({}); // Track which product categories are being edited
   const [editingIngredients, setEditingIngredients] = useState({}); // Track which product ingredients are being edited
+  const [editingName, setEditingName] = useState({}); // Track which product names are being edited
+  const [editingDescription, setEditingDescription] = useState({}); // Track which product descriptions are being edited
   const [editingImage, setEditingImage] = useState({}); // Track which product images are being edited
   const [editingImageFiles, setEditingImageFiles] = useState({}); // Track selected files for editing
   const [editingImagePreviews, setEditingImagePreviews] = useState({}); // Track previews for editing
@@ -643,6 +645,117 @@ const AdminProductsPage = () => {
     });
   };
 
+  // Name editing functions
+  const handleEditName = (productId, currentName) => {
+    setEditingName({
+      ...editingName,
+      [productId]: currentName || ''
+    });
+  };
+
+  const handleCancelEditName = (productId) => {
+    const newEditingName = { ...editingName };
+    delete newEditingName[productId];
+    setEditingName(newEditingName);
+  };
+
+  const handleSaveName = async (productId, oldName) => {
+    try {
+      setError(null);
+      const name = editingName[productId] || '';
+
+      if (!name.trim()) {
+        setError('Il nome del prodotto non può essere vuoto');
+        return;
+      }
+
+      const response = await fetch(`/api/products?id=${productId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: name.trim() })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Remove from editing state
+        handleCancelEditName(productId);
+        
+        // Refresh products list
+        await fetchProducts();
+        
+        // Show success message
+        alert(`Nome prodotto aggiornato da "${oldName}" a "${name.trim()}" con successo!`);
+      } else {
+        setError(result.error || 'Errore durante l\'aggiornamento del nome');
+      }
+    } catch (err) {
+      setError('Errore di rete: ' + err.message);
+    }
+  };
+
+  const handleNameInputChange = (productId, value) => {
+    setEditingName({
+      ...editingName,
+      [productId]: value
+    });
+  };
+
+  // Description editing functions
+  const handleEditDescription = (productId, currentDescription) => {
+    setEditingDescription({
+      ...editingDescription,
+      [productId]: currentDescription || ''
+    });
+  };
+
+  const handleCancelEditDescription = (productId) => {
+    const newEditingDescription = { ...editingDescription };
+    delete newEditingDescription[productId];
+    setEditingDescription(newEditingDescription);
+  };
+
+  const handleSaveDescription = async (productId, productName) => {
+    try {
+      setError(null);
+      const description = editingDescription[productId] || '';
+
+      const response = await fetch(`/api/products?id=${productId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ description: description.trim() })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Remove from editing state
+        handleCancelEditDescription(productId);
+        
+        // Refresh products list
+        await fetchProducts();
+        
+        // Show success message
+        alert(`Descrizione per "${productName}" aggiornata con successo!`);
+      } else {
+        setError(result.error || 'Errore durante l\'aggiornamento della descrizione');
+      }
+    } catch (err) {
+      setError('Errore di rete: ' + err.message);
+    }
+  };
+
+  const handleDescriptionInputChange = (productId, value) => {
+    setEditingDescription({
+      ...editingDescription,
+      [productId]: value
+    });
+  };
+
   // Image editing functions
   const handleEditImage = (productId, currentImageUrl) => {
     setEditingImage({
@@ -809,8 +922,8 @@ const AdminProductsPage = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <h1 className="text-3xl font-bold mb-8">Gestione Prodotti - Admin</h1>
+    <>
+      <h1 className="text-3xl font-bold mb-8">Gestione Prodotti</h1>
 
       {/* Form for adding new product */}
       <div className="bg-white shadow-lg rounded-lg p-6 mb-8">
@@ -1023,9 +1136,89 @@ const AdminProductsPage = () => {
               <tbody>
                 {products.map((product, index) => (
                   <tr key={product.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                    <td className="px-4 py-2 font-medium">{product.name}</td>
+                    <td className="px-4 py-2 font-medium">
+                      {editingName[product.id] !== undefined ? (
+                        <div className="flex gap-2 items-center">
+                          <input
+                            type="text"
+                            value={editingName[product.id]}
+                            onChange={(e) => handleNameInputChange(product.id, e.target.value)}
+                            className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            placeholder="Nome del prodotto"
+                          />
+                          <button
+                            onClick={() => handleSaveName(product.id, product.name)}
+                            className="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600"
+                            title="Salva nome"
+                          >
+                            ✓
+                          </button>
+                          <button
+                            onClick={() => handleCancelEditName(product.id)}
+                            className="bg-gray-500 text-white px-2 py-1 rounded text-xs hover:bg-gray-600"
+                            title="Annulla"
+                          >
+                            ✗
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2 items-center">
+                          <div className="flex-1">
+                            {product.name}
+                          </div>
+                          <button
+                            onClick={() => handleEditName(product.id, product.name)}
+                            className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"
+                            title="Modifica nome"
+                          >
+                            ✏️
+                          </button>
+                        </div>
+                      )}
+                    </td>
                     <td className="px-4 py-2 text-gray-600">
-                      {product.description || '-'}
+                      {editingDescription[product.id] !== undefined ? (
+                        <div className="flex gap-2 items-center">
+                          <textarea
+                            value={editingDescription[product.id]}
+                            onChange={(e) => handleDescriptionInputChange(product.id, e.target.value)}
+                            className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 min-h-[60px] resize-none"
+                            placeholder="Descrizione del prodotto"
+                            rows={2}
+                          />
+                          <div className="flex flex-col gap-1">
+                            <button
+                              onClick={() => handleSaveDescription(product.id, product.name)}
+                              className="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600"
+                              title="Salva descrizione"
+                            >
+                              ✓
+                            </button>
+                            <button
+                              onClick={() => handleCancelEditDescription(product.id)}
+                              className="bg-gray-500 text-white px-2 py-1 rounded text-xs hover:bg-gray-600"
+                              title="Annulla"
+                            >
+                              ✗
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2 items-center">
+                          <div className="flex-1">
+                            {product.description || (
+                              <span className="text-gray-400 text-xs">Nessuna descrizione</span>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => handleEditDescription(product.id, product.description)}
+                            className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"
+                            title="Modifica descrizione"
+                          >
+                            ✏️
+                          </button>
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-2">
                       {editingPrice[product.id] !== undefined ? (
@@ -1352,7 +1545,7 @@ const AdminProductsPage = () => {
           </p>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

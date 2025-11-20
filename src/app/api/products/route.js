@@ -180,6 +180,25 @@ export async function PUT(request) {
     };
 
     // Handle different types of updates
+    if (body.hasOwnProperty('name')) {
+      if (!body.name || !body.name.trim()) {
+        return new Response(JSON.stringify({
+          success: false,
+          error: 'Product name cannot be empty'
+        }), {
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+      }
+      updateData.name = body.name.trim();
+    }
+
+    if (body.hasOwnProperty('description')) {
+      updateData.description = body.description || '';
+    }
+
     if (body.hasOwnProperty('tags')) {
       if (!Array.isArray(body.tags)) {
         return new Response(JSON.stringify({
