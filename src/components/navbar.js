@@ -60,7 +60,7 @@ export default function Navbar() {
             <div className="flex shrink-0 items-center">
               <a href="/"><img
                 alt="Cristofaro Chef Logo"
-                src="/images/logo_gold.jpg"
+                src="/images/logo_black_white.jpg"
                 className="h-10 w-auto"
               /></a>
             </div>

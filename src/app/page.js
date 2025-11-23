@@ -22,7 +22,7 @@ export default function Home() {
         <div className="relative z-10 text-center px-4 max-w-5xl mx-auto">
           <div className="mb-8">
             <Image
-              src="/images/logo_gold.jpg"
+              src="/images/logo_black_white.jpg"
               alt="Logo"
               width={150}
               height={150}
