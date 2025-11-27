@@ -16,7 +16,7 @@ const OrdersPage = () => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-        fetchUserOrders(currentUser.uid);
+        fetchUserOrders(currentUser.email); // Pass email instead of uid
       } else {
         // Redirect to login if not authenticated
         router.push('/login');
@@ -26,11 +26,22 @@ const OrdersPage = () => {
     return () => unsubscribe();
   }, [router]);
 
-  const fetchUserOrders = async (userId) => {
+  const fetchUserOrders = async (customerEmail) => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/orders?userId=${userId}`);
+      setError(null);
+      
+      console.log('Fetching orders for customer email:', customerEmail);
+      const response = await fetch(`/api/orders?customerEmail=${encodeURIComponent(customerEmail)}`);
+      
+      console.log('Orders response status:', response.status);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
+      console.log('Orders response data:', data);
       
       if (data.success) {
         setOrders(data.orders);
@@ -38,8 +49,8 @@ const OrdersPage = () => {
         setError(data.error || 'Errore nel caricamento degli ordini');
       }
     } catch (err) {
-      setError('Errore di rete nel caricamento degli ordini');
-      console.error('Error fetching orders:', err);
+      console.error('Orders fetch error details:', err);
+      setError('Errore di rete nel caricamento degli ordini: ' + err.message);
     } finally {
       setLoading(false);
     }

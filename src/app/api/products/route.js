@@ -8,43 +8,42 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    // Use the actual Firebase path structure: demo/data/products
-    const productsRef = collection(db, 'demo', 'data', 'products');
+    console.log('Products API: GET request received');
     
-    // Get all documents from the collection
-    const querySnapshot = await getDocs(productsRef);
+    // Test basic response first
+    console.log('Products API: Creating test response...');
     
-    // Extract the data from each document
-    const products = [];
-    querySnapshot.forEach((doc) => {
-      products.push({
-        id: doc.id,
-        ...doc.data()
-      });
-    });
-
-    // Return the products as JSON using native Response
-    return new Response(JSON.stringify({
+    const response = new Response(JSON.stringify({
       success: true,
-      products: products,
-      count: products.length
+      products: [],
+      count: 0,
+      message: 'API route is working'
     }), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE',
+        'Access-Control-Allow-Headers': 'Content-Type',
       },
     });
 
+    console.log('Products API: Returning test response');
+    return response;
+
   } catch (error) {
-    console.error('Error fetching products:', error);
+    console.error('Products API: Error in GET handler:', error);
+    console.error('Error stack:', error.stack);
     return new Response(JSON.stringify({
       success: false, 
       error: 'Failed to fetch products',
-      message: error.message 
+      message: error.message,
+      stack: error.stack
     }), {
       status: 500,
       headers: {
         'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
       },
     });
   }

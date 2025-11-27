@@ -25,8 +25,35 @@ const ProductPage = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/products');
+      setError(null);
+      
+      console.log('Fetching products from /api/products...');
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
+      const response = await fetch('/api/products', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      console.log('Response received:', response);
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Response error text:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      
       const data = await response.json();
+      console.log('Response data:', data);
       
       if (data.success) {
         setProducts(data.products);
@@ -35,7 +62,15 @@ const ProductPage = () => {
         setError(data.error || 'Failed to fetch products');
       }
     } catch (err) {
-      setError('Network error: ' + err.message);
+      console.error('Fetch error details:', err);
+      console.error('Error type:', err.constructor.name);
+      console.error('Error message:', err.message);
+      
+      if (err.name === 'AbortError') {
+        setError('Request timeout - please try again');
+      } else {
+        setError('Network error: ' + err.message);
+      }
     } finally {
       setLoading(false);
     }

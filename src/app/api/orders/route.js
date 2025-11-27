@@ -4,29 +4,44 @@ import { collection, getDocs, addDoc, updateDoc, doc, query, orderBy, where } fr
 // Configure for dynamic route to allow POST operations
 export const dynamic = 'force-dynamic';
 
-// GET - Fetch all orders or orders for a specific user
+// GET - Fetch all orders or orders for a specific customer email
 export async function GET(request) {
   try {
-    // Get the URL to check for userId parameter
+    console.log('Orders API: GET request received');
+    
+    // Get the URL to check for customerEmail parameter
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
+    const customerEmail = searchParams.get('customerEmail');
+    const userId = searchParams.get('userId'); // Keep userId for backward compatibility
+    
+    console.log('Orders API: customerEmail parameter:', customerEmail);
+    console.log('Orders API: userId parameter:', userId);
 
     // Use the actual Firebase path structure: demo/data/orders
     const ordersRef = collection(db, 'demo', 'data', 'orders');
     
     let ordersQuery;
-    if (userId) {
-      // Filter orders by userId if provided
+    if (customerEmail) {
+      console.log('Orders API: Filtering by customerEmail');
+      // Filter orders by customerEmail
       ordersQuery = query(
         ordersRef, 
-        where('userId', '==', userId),
-        orderBy('createdAt', 'desc')
+        where('customerEmail', '==', customerEmail)
+      );
+    } else if (userId) {
+      console.log('Orders API: Filtering by userId (backward compatibility)');
+      // Keep userId filtering for backward compatibility
+      ordersQuery = query(
+        ordersRef, 
+        where('userId', '==', userId)
       );
     } else {
-      // Get all orders if no userId filter
-      ordersQuery = query(ordersRef, orderBy('createdAt', 'desc'));
+      console.log('Orders API: Fetching all orders');
+      // Get all orders if no filter
+      ordersQuery = ordersRef; // Simple query without ordering for now
     }
     
+    console.log('Orders API: Executing Firestore query...');
     // Get all documents from the collection
     const querySnapshot = await getDocs(ordersQuery);
     
@@ -38,6 +53,8 @@ export async function GET(request) {
         ...doc.data()
       });
     });
+
+    console.log('Orders API: Found', orders.length, 'orders');
 
     // Return the orders as JSON
     return new Response(JSON.stringify({
@@ -52,11 +69,11 @@ export async function GET(request) {
     });
 
   } catch (error) {
-    console.error('Error fetching orders:', error);
+    console.error('Orders API: Error fetching orders:', error);
     return new Response(JSON.stringify({
-      success: false, 
+      success: false,
       error: 'Failed to fetch orders',
-      message: error.message 
+      message: error.message
     }), {
       status: 500,
       headers: {
@@ -64,9 +81,7 @@ export async function GET(request) {
       },
     });
   }
-}
-
-// POST - Create a new order
+}// POST - Create a new order
 export async function POST(request) {
   try {
     const body = await request.json();
