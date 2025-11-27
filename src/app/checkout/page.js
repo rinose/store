@@ -3,8 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { useBasket } from '../../contexts/BasketContext';
 import { useRouter } from 'next/navigation';
+import { auth } from '../../firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 const CheckoutPage = () => {
+  const [user, setUser] = useState(null);
   const {
     basketItems,
     getBasketTotal,
@@ -43,6 +46,15 @@ const CheckoutPage = () => {
       router.push('/basket');
     }
   }, [basketItems, router]);
+
+  // Check for authenticated user
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const handleCustomerInfoChange = (e) => {
     const { name, value } = e.target;
@@ -152,6 +164,7 @@ const CheckoutPage = () => {
 
       // Create order in the database
       const orderData = {
+        userId: user ? user.uid : null, // Add userId if user is authenticated
         customerName: `${customerInfo.firstName} ${customerInfo.lastName}`,
         customerEmail: customerInfo.email,
         customerPhone: customerInfo.phone,

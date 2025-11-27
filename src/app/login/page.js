@@ -1,61 +1,72 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAdminAuth } from '../../contexts/AdminAuthContext';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../../firebase';
+import Link from 'next/link';
 
-const AdminPage = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+const LoginPage = () => {
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login, isAuthenticated, isLoading } = useAdminAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    // If already authenticated, redirect to admin dashboard immediately
-    if (isAuthenticated && !isLoading) {
-      router.replace('/admin/products');
-    }
-  }, [isAuthenticated, isLoading, router]);
-
-  // Show loading while checking authentication
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[#aa8510] mx-auto mb-4"></div>
-          <p className="text-gray-600">Caricamento...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // If authenticated, don't show the form (will redirect via useEffect)
-  if (isAuthenticated) {
-    return null;
-  }
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    if (!email || !password) {
-      setError('Inserisci email e password');
+    // Validation
+    if (!formData.email || !formData.password) {
+      setError('Email e password sono obbligatori');
       setLoading(false);
       return;
     }
 
-    const result = await login(email, password);
-    
-    if (result.success) {
-      router.push('/admin/products');
-    } else {
-      setError(result.error);
+    try {
+      // Sign in user
+      await signInWithEmailAndPassword(auth, formData.email, formData.password);
+      
+      // Redirect to home page after successful login
+      router.push('/');
+      
+    } catch (err) {
+      console.error('Login error:', err);
+      
+      // Handle Firebase auth errors
+      switch (err.code) {
+        case 'auth/user-not-found':
+          setError('Nessun utente trovato con questa email');
+          break;
+        case 'auth/wrong-password':
+          setError('Password non corretta');
+          break;
+        case 'auth/invalid-email':
+          setError('Indirizzo email non valido');
+          break;
+        case 'auth/user-disabled':
+          setError('Questo account è stato disabilitato');
+          break;
+        case 'auth/too-many-requests':
+          setError('Troppi tentativi falliti. Riprova più tardi');
+          break;
+        default:
+          setError('Errore durante il login. Verifica le tue credenziali.');
+      }
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   return (
@@ -63,28 +74,34 @@ const AdminPage = () => {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Accesso Admin
+            Accedi al tuo account
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Inserisci le tue credenziali per accedere al pannello di amministrazione
+            Oppure{' '}
+            <Link 
+              href="/register" 
+              className="font-medium text-blue-600 hover:text-blue-500"
+            >
+              crea un nuovo account
+            </Link>
           </p>
         </div>
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm space-y-4">
+          <div className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email
+                Indirizzo email
               </label>
               <input
                 id="email"
                 name="email"
                 type="email"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={formData.email}
+                onChange={handleChange}
                 className="mt-1 appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="admin@example.com"
+                placeholder="nome@esempio.com"
               />
             </div>
             
@@ -97,8 +114,8 @@ const AdminPage = () => {
                 name="password"
                 type="password"
                 required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                value={formData.password}
+                onChange={handleChange}
                 className="mt-1 appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Password"
               />
@@ -124,10 +141,19 @@ const AdminPage = () => {
               {loading ? 'Accesso in corso...' : 'Accedi'}
             </button>
           </div>
+
+          <div className="text-center">
+            <Link 
+              href="/"
+              className="text-sm text-gray-600 hover:text-gray-900"
+            >
+              ← Torna alla home
+            </Link>
+          </div>
         </form>
       </div>
     </div>
   );
 };
 
-export default AdminPage;
+export default LoginPage;

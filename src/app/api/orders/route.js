@@ -1,15 +1,31 @@
 import { db } from '../../../firebase.js';
-import { collection, getDocs, addDoc, updateDoc, doc, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, addDoc, updateDoc, doc, query, orderBy, where } from 'firebase/firestore';
 
 // Configure for dynamic route to allow POST operations
 export const dynamic = 'force-dynamic';
 
-// GET - Fetch all orders
-export async function GET() {
+// GET - Fetch all orders or orders for a specific user
+export async function GET(request) {
   try {
+    // Get the URL to check for userId parameter
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('userId');
+
     // Use the actual Firebase path structure: demo/data/orders
     const ordersRef = collection(db, 'demo', 'data', 'orders');
-    const ordersQuery = query(ordersRef, orderBy('createdAt', 'desc'));
+    
+    let ordersQuery;
+    if (userId) {
+      // Filter orders by userId if provided
+      ordersQuery = query(
+        ordersRef, 
+        where('userId', '==', userId),
+        orderBy('createdAt', 'desc')
+      );
+    } else {
+      // Get all orders if no userId filter
+      ordersQuery = query(ordersRef, orderBy('createdAt', 'desc'));
+    }
     
     // Get all documents from the collection
     const querySnapshot = await getDocs(ordersQuery);
