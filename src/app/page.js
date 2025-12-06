@@ -309,6 +309,15 @@ const getYouTubeEmbedUrl = (url) => {
           </Link>
         </div>
       </section>
+
+      {/* Footer Section with Contact Information */}
+      <footer className="py-12 bg-brand-black text-gray-300">
+        <div className="container mx-auto px-4 text-center">
+          <p className="text-2xl font-bold mb-4">Contattaci</p>
+          <p className="text-lg">Email: cristofaropastrychef@gmail.com</p>
+          <p className="text-lg">Telefono: +39 348 374 1295</p>
+        </div>
+      </footer>
     </div>
   );
 }

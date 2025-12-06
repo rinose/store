@@ -64,7 +64,7 @@ const AdminProductsPage = () => {
         customData: error.customData
       });
       
-      // Provide specific guidance based on error code
+      // Provide specific guidance on error code
       if (error.code === 'storage/unauthorized') {
         console.error('🚫 UNAUTHORIZED: Firebase Storage rules are blocking uploads');
         console.error('💡 Solution: Update Firebase Storage rules to allow uploads');
@@ -1586,10 +1586,10 @@ const AdminProductsPage = () => {
                     <td className="px-4 py-2">
                       <button
                         onClick={() => handleDelete(product.id, product.name)}
-                        className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
+                        className="bg-red-300 text-white px-3 py-1 rounded text-sm hover:bg-red-400 focus:outline-none focus:ring-2 focus:ring-red-300"
                         title={`Elimina ${product.name}`}
                       >
-                        🗑️ Elimina
+                        🗑️<span className="font-bold"> Elimina</span>
                       </button>
                     </td>
                   </tr>

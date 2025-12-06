@@ -14,7 +14,6 @@ const AdminNavigation = ({ children }) => {
   const navItems = [
     { href: '/admin/products', label: 'Gestione Prodotti' },
     { href: '/admin/orders', label: 'Gestione Ordini' },
-    { href: '/admin/landing', label: 'Gestione Landing Page' },
   ];
 
   const handleLogout = () => {

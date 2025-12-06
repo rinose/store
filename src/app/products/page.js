@@ -57,9 +57,11 @@ const ProductPage = () => {
       
       if (data.success) {
         setProducts(data.products);
+        console.log('Products fetched successfully:', data.products);
         extractTags(data.products);
       } else {
         setError(data.error || 'Failed to fetch products');
+        console.error('Error in API response:', data.error);
       }
     } catch (err) {
       console.error('Fetch error details:', err);
@@ -73,6 +75,9 @@ const ProductPage = () => {
       }
     } finally {
       setLoading(false);
+      console.log('Loading state set to false');
+      console.log('Current products state:', products);
+      console.log('Current filteredProducts state:', filteredProducts);
     }
   };
 
@@ -268,7 +273,7 @@ const ProductPage = () => {
               )}
 
               {/* Product Image - Fixed height */}
-              <div className="h-48 overflow-hidden relative bg-gray-100">
+              <div className="h-48 overflow-hidden relative bg-gray-100 group">
                 {(() => {
                   // Support both new imageUrls array and legacy imageUrl
                   const images = product.imageUrls && product.imageUrls.length > 0 
@@ -288,7 +293,7 @@ const ProductPage = () => {
                       <img
                         src={images[0]}
                         alt={product.name}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                         onError={(e) => {
                           e.target.style.display = 'none';
                           e.target.nextSibling.style.display = 'flex';
@@ -416,12 +421,6 @@ const ProductPage = () => {
           ))}
         </div>
       )}
-      
-      <div className="mt-8 text-center">
-        <p className="text-gray-500">
-          Totale prodotti: {products.length} | Visualizzati: {filteredProducts.length}
-        </p>
-      </div>
 
       {/* Ingredients Modal */}
       {showIngredientsModal && selectedProductForIngredients && (
