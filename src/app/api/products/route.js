@@ -6,18 +6,29 @@ export const dynamic = 'force-dynamic';
 
 // For testing: http://localhost:3000/api/products
 
-export async function GET() {
+export async function GET(request) {
   try {
     console.log('Products API: GET request received');
     
-    // Test basic response first
-    console.log('Products API: Creating test response...');
+    // Use the actual Firebase path structure: demo/data/products
+    const productsRef = collection(db, 'demo', 'data', 'products');
+    const querySnapshot = await getDocs(productsRef);
     
-    const response = new Response(JSON.stringify({
+    // Extract the data from each document
+    const products = [];
+    querySnapshot.forEach((doc) => {
+      products.push({
+        id: doc.id,
+        ...doc.data()
+      });
+    });
+
+    console.log('Products API: Found', products.length, 'products');
+
+    return new Response(JSON.stringify({
       success: true,
-      products: [],
-      count: 0,
-      message: 'API route is working'
+      products: products,
+      count: products.length
     }), {
       status: 200,
       headers: {
@@ -28,17 +39,12 @@ export async function GET() {
       },
     });
 
-    console.log('Products API: Returning test response');
-    return response;
-
   } catch (error) {
-    console.error('Products API: Error in GET handler:', error);
-    console.error('Error stack:', error.stack);
+    console.error('Products API: Error fetching products:', error);
     return new Response(JSON.stringify({
       success: false, 
       error: 'Failed to fetch products',
-      message: error.message,
-      stack: error.stack
+      message: error.message
     }), {
       status: 500,
       headers: {
@@ -77,6 +83,7 @@ export async function POST(request) {
       tags: tags || [],
       ingredients: ingredients || '',
       imageUrls: imageUrls || [], // Store array of image URLs
+      available: true, // Default to available when creating new products
       createdAt: serverTimestamp()
     });
 
@@ -243,6 +250,10 @@ export async function PUT(request) {
 
     if (body.hasOwnProperty('imageUrls')) {
       updateData.imageUrls = body.imageUrls || [];
+    }
+
+    if (body.hasOwnProperty('available')) {
+      updateData.available = Boolean(body.available);
     }
 
     // Update product using the actual Firebase path structure

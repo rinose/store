@@ -1,7 +1,51 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useState, useEffect } from "react";
 
 export default function Home() {
+  const [videos, setVideos] = useState([]);
+  const [videosLoading, setVideosLoading] = useState(true);
+
+  const videoTitles = [
+  "Cantuccini Senza Glutine",
+  "Chiacchiere Fritte", 
+  "Dubai Chocolate"
+  ];
+
+  useEffect(() => {
+    // Load YouTube videos from JSON file
+    fetch('/videos/youtube_videos.json')
+      .then(response => response.json())
+      .then(data => {
+        setVideos(data.videos || []);
+        setVideosLoading(false);
+      })
+      .catch(error => {
+        console.error('Error loading videos:', error);
+        setVideosLoading(false);
+      });
+  }, []);
+
+  // Function to convert YouTube URL to embed URL
+  // Function to convert YouTube URL to embed URL
+// Function to convert YouTube URL to embed URL
+const getYouTubeEmbedUrl = (url) => {
+  // Handle different YouTube URL formats
+  let videoId = '';
+  
+  if (url.includes('youtube.com/shorts/')) {
+    videoId = url.split('youtube.com/shorts/')[1].split('?')[0];
+  } else if (url.includes('youtu.be/')) {
+    videoId = url.split('youtu.be/')[1].split('?')[0];
+  } else if (url.includes('youtube.com/watch?v=')) {
+    videoId = url.split('youtube.com/watch?v=')[1].split('&')[0];
+  }
+  
+  // Use YouTube nocookie domain with minimal parameters
+  return `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1`;
+};
   return (
     <div className="min-h-screen bg-brand-black">
       {/* Hero Section */}
@@ -139,6 +183,78 @@ export default function Home() {
                   <path d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
                 </svg>
               </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* YouTube Videos Section */}
+      <section className="py-24 bg-gradient-to-b from-zinc-900 to-brand-black">
+        <div className="container mx-auto px-4">
+          <h2 className="text-4xl md:text-5xl font-bold text-center text-white mb-6">
+            Le Nostre <span className="text-brand-gold">Creazioni in Video</span>
+          </h2>
+          <p className="text-xl text-gray-300 text-center mb-16 max-w-3xl mx-auto">
+            Scopri l'arte della pasticceria attraverso i nostri video, dove ogni dolce prende vita 
+            con maestria e passione.
+          </p>
+          
+          {videosLoading ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="text-lg text-gray-300">Caricamento video...</div>
+            </div>
+          ) : videos.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+              {videos.map((videoUrl, index) => (
+                <div key={index} className="bg-brand-black rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border border-brand-gold/20">
+                  <div className="relative aspect-video">
+                    <iframe
+                      src={getYouTubeEmbedUrl(videoUrl)}
+                      title={`Video ${index + 1} - Cristofaro Pastry Chef`}
+                      className="w-full h-full"
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    ></iframe>
+                  </div>
+                  <div className="p-6">
+                    <h3 className="text-lg font-semibold text-white mb-2 text-center">
+                      {videoTitles[index] || `Video ${index + 1}`}
+                    </h3>
+                    <p className="text-gray-300 text-sm">
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center text-gray-300">
+              <p>Nessun video disponibile al momento.</p>
+            </div>
+          )}
+
+          {/* Call to action for social media */}
+          <div className="text-center mt-16">
+            <p className="text-brand-gold text-lg font-medium mb-4">
+              Vuoi vedere altri video? Seguici sui nostri social!
+            </p>
+            <div className="flex justify-center gap-4">
+              <a
+                href="https://www.tiktok.com/@cristofaropastrychef"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-brand-gold hover:bg-brand-gold-light text-brand-black px-6 py-3 rounded-full font-semibold transition-all duration-300 transform hover:scale-105"
+              >
+                Seguici su TikTok
+              </a>
+              <a
+                href="https://www.instagram.com/cristofaro_pastrychef?igsh=aDNqeTFmaGk2ejQ0&utm_source=qr"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="border-2 border-brand-gold text-brand-gold hover:bg-brand-gold hover:text-brand-black px-6 py-3 rounded-full font-semibold transition-all duration-300"
+              >
+                Seguici su Instagram
+              </a>
             </div>
           </div>
         </div>

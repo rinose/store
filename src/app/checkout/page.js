@@ -6,6 +6,13 @@ import { useRouter } from 'next/navigation';
 import { auth } from '../../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 
+const videoTitles = [
+  "Cantuccini Senza Glutine",
+  "Chiacchiere Fritte", 
+  "Dubai Chocolate"
+];
+
+
 const CheckoutPage = () => {
   const [user, setUser] = useState(null);
   const {

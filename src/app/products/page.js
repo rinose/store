@@ -253,7 +253,20 @@ const ProductPage = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProducts.map((product) => (
-            <div key={product.id} className="bg-white shadow-md rounded-lg border hover:shadow-lg transition-shadow overflow-hidden flex flex-col h-full">
+            <div key={product.id} className="bg-white shadow-md rounded-lg border hover:shadow-lg transition-shadow overflow-hidden flex flex-col h-full relative">
+              
+              {/* Light grey overlay for unavailable products - preserves colors */}
+              {product.available === false && (
+                <div className="absolute inset-0 bg-gray-100/40 z-10 pointer-events-none rounded-lg"></div>
+              )}
+
+              {/* "ESAURITO" Banner - Overlapping style */}
+              {product.available === false && (
+                <div className="absolute top-4 left-4 z-20 bg-red-600 text-white px-4 py-2 rounded-md text-sm font-bold shadow-lg transform -rotate-3">
+                  ESAURITO
+                </div>
+              )}
+
               {/* Product Image - Fixed height */}
               <div className="h-48 overflow-hidden relative bg-gray-100">
                 {(() => {
@@ -355,15 +368,26 @@ const ProductPage = () => {
                   <div className="flex items-center justify-between gap-2">
                     <button
                       onClick={() => handleAddToCart(product)}
-                      disabled={!product.price}
+                      disabled={!product.price || product.available === false}
                       className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                        product.price
+                        product.price && product.available !== false
                           ? 'bg-brand-gold text-white hover:bg-brand-black focus:outline-none focus:ring-2 focus:ring-blue-500'
                           : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       }`}
-                      title={product.price ? 'Aggiungi al carrello' : 'Prezzo non disponibile'}
+                      title={
+                        product.available === false 
+                          ? 'Prodotto esaurito' 
+                          : product.price 
+                            ? 'Aggiungi al carrello' 
+                            : 'Prezzo non disponibile'
+                      }
                     >
-                      {product.price ? 'Aggiungi al carrello' : 'Non disponibile'}
+                      {product.available === false 
+                        ? 'Esaurito' 
+                        : product.price 
+                          ? 'Aggiungi al carrello' 
+                          : 'Non disponibile'
+                      }
                     </button>
                     
                     <button

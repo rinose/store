@@ -440,6 +440,40 @@ const AdminProductsPage = () => {
     setEditingTags(newEditingTags);
   };
 
+  const handleToggleAvailability = async (productId, currentAvailability) => {
+    try {
+      setError(null);
+      const newAvailability = !currentAvailability;
+
+      const response = await fetch(`/api/products?id=${productId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ available: newAvailability })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Update the local state
+        setProducts(prevProducts => 
+          prevProducts.map(product => 
+            product.id === productId 
+              ? { ...product, available: newAvailability }
+              : product
+          )
+        );
+        console.log(`Product ${productId} availability changed to ${newAvailability}`);
+      } else {
+        throw new Error(result.error || 'Failed to update availability');
+      }
+    } catch (error) {
+      console.error('Error updating availability:', error);
+      setError('Errore nell\'aggiornamento della disponibilità: ' + error.message);
+    }
+  };
+
   const handleSaveTags = async (productId, productName) => {
     try {
       setError(null);
@@ -1129,6 +1163,7 @@ const AdminProductsPage = () => {
                   <th className="px-4 py-2 text-left font-medium text-gray-700">Categoria</th>
                   <th className="px-4 py-2 text-left font-medium text-gray-700">Tags</th>
                   <th className="px-4 py-2 text-left font-medium text-gray-700">Ingredienti</th>
+                  <th className="px-4 py-2 text-left font-medium text-gray-700">Disponibilità</th>
                   <th className="px-4 py-2 text-left font-medium text-gray-700">Immagine</th>
                   <th className="px-4 py-2 text-left font-medium text-gray-700">Azioni</th>
                 </tr>
@@ -1411,6 +1446,31 @@ const AdminProductsPage = () => {
                           </button>
                         </div>
                       )}
+                    </td>
+                    <td className="px-4 py-2">
+                      <div className="flex items-center justify-center">
+                        <button
+                          onClick={() => handleToggleAvailability(product.id, product.available)}
+                          className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                            product.available === false
+                              ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                              : 'bg-green-100 text-green-700 hover:bg-green-200'
+                          }`}
+                          title={`Clicca per ${product.available === false ? 'rendere disponibile' : 'rendere non disponibile'}`}
+                        >
+                          {product.available === false ? (
+                            <>
+                              <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                              Esaurito
+                            </>
+                          ) : (
+                            <>
+                              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                              Disponibile
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </td>
                     <td className="px-4 py-2">
                       {editingImage[product.id] ? (
