@@ -25,19 +25,59 @@ const ProductPage = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/products');
+      setError(null);
+      
+      console.log('Fetching products from /api/products...');
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
+      const response = await fetch('/api/products', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      console.log('Response received:', response);
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Response error text:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      
       const data = await response.json();
+      console.log('Response data:', data);
       
       if (data.success) {
         setProducts(data.products);
+        console.log('Products fetched successfully:', data.products);
         extractTags(data.products);
       } else {
         setError(data.error || 'Failed to fetch products');
+        console.error('Error in API response:', data.error);
       }
     } catch (err) {
-      setError('Network error: ' + err.message);
+      console.error('Fetch error details:', err);
+      console.error('Error type:', err.constructor.name);
+      console.error('Error message:', err.message);
+      
+      if (err.name === 'AbortError') {
+        setError('Request timeout - please try again');
+      } else {
+        setError('Network error: ' + err.message);
+      }
     } finally {
       setLoading(false);
+      console.log('Loading state set to false');
+      console.log('Current products state:', products);
+      console.log('Current filteredProducts state:', filteredProducts);
     }
   };
 
@@ -218,9 +258,22 @@ const ProductPage = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProducts.map((product) => (
-            <div key={product.id} className="bg-white shadow-md rounded-lg border hover:shadow-lg transition-shadow overflow-hidden flex flex-col h-full">
+            <div key={product.id} className="bg-white shadow-md rounded-lg border hover:shadow-lg transition-shadow overflow-hidden flex flex-col h-full relative">
+              
+              {/* Light grey overlay for unavailable products - preserves colors */}
+              {product.available === false && (
+                <div className="absolute inset-0 bg-gray-100/40 z-10 pointer-events-none rounded-lg"></div>
+              )}
+
+              {/* "ESAURITO" Banner - Overlapping style */}
+              {product.available === false && (
+                <div className="absolute top-4 left-4 z-20 bg-red-600 text-white px-4 py-2 rounded-md text-sm font-bold shadow-lg transform -rotate-3">
+                  ESAURITO
+                </div>
+              )}
+
               {/* Product Image - Fixed height */}
-              <div className="h-48 overflow-hidden relative bg-gray-100">
+              <div className="h-48 overflow-hidden relative bg-gray-100 group">
                 {(() => {
                   // Support both new imageUrls array and legacy imageUrl
                   const images = product.imageUrls && product.imageUrls.length > 0 
@@ -240,7 +293,7 @@ const ProductPage = () => {
                       <img
                         src={images[0]}
                         alt={product.name}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                         onError={(e) => {
                           e.target.style.display = 'none';
                           e.target.nextSibling.style.display = 'flex';
@@ -320,15 +373,26 @@ const ProductPage = () => {
                   <div className="flex items-center justify-between gap-2">
                     <button
                       onClick={() => handleAddToCart(product)}
-                      disabled={!product.price}
+                      disabled={!product.price || product.available === false}
                       className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                        product.price
+                        product.price && product.available !== false
                           ? 'bg-brand-gold text-white hover:bg-brand-black focus:outline-none focus:ring-2 focus:ring-blue-500'
                           : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       }`}
-                      title={product.price ? 'Aggiungi al carrello' : 'Prezzo non disponibile'}
+                      title={
+                        product.available === false 
+                          ? 'Prodotto esaurito' 
+                          : product.price 
+                            ? 'Aggiungi al carrello' 
+                            : 'Prezzo non disponibile'
+                      }
                     >
-                      {product.price ? 'Aggiungi al carrello' : 'Non disponibile'}
+                      {product.available === false 
+                        ? 'Esaurito' 
+                        : product.price 
+                          ? 'Aggiungi al carrello' 
+                          : 'Non disponibile'
+                      }
                     </button>
                     
                     <button
@@ -357,12 +421,6 @@ const ProductPage = () => {
           ))}
         </div>
       )}
-      
-      <div className="mt-8 text-center">
-        <p className="text-gray-500">
-          Totale prodotti: {products.length} | Visualizzati: {filteredProducts.length}
-        </p>
-      </div>
 
       {/* Ingredients Modal */}
       {showIngredientsModal && selectedProductForIngredients && (

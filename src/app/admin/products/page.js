@@ -64,7 +64,7 @@ const AdminProductsPage = () => {
         customData: error.customData
       });
       
-      // Provide specific guidance based on error code
+      // Provide specific guidance on error code
       if (error.code === 'storage/unauthorized') {
         console.error('🚫 UNAUTHORIZED: Firebase Storage rules are blocking uploads');
         console.error('💡 Solution: Update Firebase Storage rules to allow uploads');
@@ -438,6 +438,40 @@ const AdminProductsPage = () => {
     const newEditingTags = { ...editingTags };
     delete newEditingTags[productId];
     setEditingTags(newEditingTags);
+  };
+
+  const handleToggleAvailability = async (productId, currentAvailability) => {
+    try {
+      setError(null);
+      const newAvailability = !currentAvailability;
+
+      const response = await fetch(`/api/products?id=${productId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ available: newAvailability })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Update the local state
+        setProducts(prevProducts => 
+          prevProducts.map(product => 
+            product.id === productId 
+              ? { ...product, available: newAvailability }
+              : product
+          )
+        );
+        console.log(`Product ${productId} availability changed to ${newAvailability}`);
+      } else {
+        throw new Error(result.error || 'Failed to update availability');
+      }
+    } catch (error) {
+      console.error('Error updating availability:', error);
+      setError('Errore nell\'aggiornamento della disponibilità: ' + error.message);
+    }
   };
 
   const handleSaveTags = async (productId, productName) => {
@@ -1129,6 +1163,7 @@ const AdminProductsPage = () => {
                   <th className="px-4 py-2 text-left font-medium text-gray-700">Categoria</th>
                   <th className="px-4 py-2 text-left font-medium text-gray-700">Tags</th>
                   <th className="px-4 py-2 text-left font-medium text-gray-700">Ingredienti</th>
+                  <th className="px-4 py-2 text-left font-medium text-gray-700">Disponibilità</th>
                   <th className="px-4 py-2 text-left font-medium text-gray-700">Immagine</th>
                   <th className="px-4 py-2 text-left font-medium text-gray-700">Azioni</th>
                 </tr>
@@ -1413,6 +1448,31 @@ const AdminProductsPage = () => {
                       )}
                     </td>
                     <td className="px-4 py-2">
+                      <div className="flex items-center justify-center">
+                        <button
+                          onClick={() => handleToggleAvailability(product.id, product.available)}
+                          className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                            product.available === false
+                              ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                              : 'bg-green-100 text-green-700 hover:bg-green-200'
+                          }`}
+                          title={`Clicca per ${product.available === false ? 'rendere disponibile' : 'rendere non disponibile'}`}
+                        >
+                          {product.available === false ? (
+                            <>
+                              <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                              Esaurito
+                            </>
+                          ) : (
+                            <>
+                              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                              Disponibile
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </td>
+                    <td className="px-4 py-2">
                       {editingImage[product.id] ? (
                         <div className="flex flex-col gap-2">
                           <div className="flex gap-2 items-center">
@@ -1526,10 +1586,10 @@ const AdminProductsPage = () => {
                     <td className="px-4 py-2">
                       <button
                         onClick={() => handleDelete(product.id, product.name)}
-                        className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
+                        className="bg-red-300 text-white px-3 py-1 rounded text-sm hover:bg-red-400 focus:outline-none focus:ring-2 focus:ring-red-300"
                         title={`Elimina ${product.name}`}
                       >
-                        🗑️ Elimina
+                        🗑️<span className="font-bold"> Elimina</span>
                       </button>
                     </td>
                   </tr>

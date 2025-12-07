@@ -3,8 +3,18 @@
 import React, { useState, useEffect } from 'react';
 import { useBasket } from '../../contexts/BasketContext';
 import { useRouter } from 'next/navigation';
+import { auth } from '../../firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+
+const videoTitles = [
+  "Cantuccini Senza Glutine",
+  "Chiacchiere Fritte", 
+  "Dubai Chocolate"
+];
+
 
 const CheckoutPage = () => {
+  const [user, setUser] = useState(null);
   const {
     basketItems,
     getBasketTotal,
@@ -23,7 +33,8 @@ const CheckoutPage = () => {
     address: '',
     city: '',
     postalCode: '',
-    country: 'Italia'
+    country: 'Italia',
+    notes: ''
   });
 
   const [paymentInfo, setPaymentInfo] = useState({
@@ -42,6 +53,15 @@ const CheckoutPage = () => {
       router.push('/basket');
     }
   }, [basketItems, router]);
+
+  // Check for authenticated user
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const handleCustomerInfoChange = (e) => {
     const { name, value } = e.target;
@@ -147,20 +167,54 @@ const CheckoutPage = () => {
 
     try {
       // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // Here you would normally send the payment data to your payment processor
-      // For demo purposes, we'll just simulate a successful payment
-      
-      // Clear the basket
-      clearBasket();
-      
-      // Redirect to success page (you can create this later)
-      alert('Pagamento completato con successo! Grazie per il tuo ordine.');
-      router.push('/orders');
+      // Create order in the database
+      const orderData = {
+        userId: user ? user.uid : null, // Add userId if user is authenticated
+        customerName: `${customerInfo.firstName} ${customerInfo.lastName}`,
+        customerEmail: customerInfo.email,
+        customerPhone: customerInfo.phone,
+        items: basketItems.map(item => ({
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          productId: item.id
+        })),
+        total: getBasketTotal(),
+        shippingAddress: {
+          address: customerInfo.address,
+          city: customerInfo.city,
+          postalCode: customerInfo.postalCode,
+          country: customerInfo.country
+        },
+        notes: customerInfo.notes || ''
+      };
+
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderData),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Clear the basket
+        clearBasket();
+        
+        // Show success message with order ID
+        alert(`Pagamento completato con successo! Il tuo ordine #${result.orderId?.slice(-8)} è stato creato. Grazie!`);
+        router.push('/orders');
+      } else {
+        throw new Error(result.error || 'Failed to create order');
+      }
       
     } catch (error) {
-      alert('Errore durante il pagamento. Riprova più tardi.');
+      console.error('Order creation error:', error);
+      alert('Errore durante la creazione dell\'ordine. Riprova più tardi.');
       setProcessing(false);
     }
   };

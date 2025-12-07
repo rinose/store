@@ -6,12 +6,12 @@ export const dynamic = 'force-dynamic';
 
 // For testing: http://localhost:3000/api/products
 
-export async function GET() {
+export async function GET(request) {
   try {
+    console.log('Products API: GET request received');
+    
     // Use the actual Firebase path structure: demo/data/products
     const productsRef = collection(db, 'demo', 'data', 'products');
-    
-    // Get all documents from the collection
     const querySnapshot = await getDocs(productsRef);
     
     // Extract the data from each document
@@ -23,7 +23,8 @@ export async function GET() {
       });
     });
 
-    // Return the products as JSON using native Response
+    console.log('Products API: Found', products.length, 'products');
+
     return new Response(JSON.stringify({
       success: true,
       products: products,
@@ -32,19 +33,23 @@ export async function GET() {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE',
+        'Access-Control-Allow-Headers': 'Content-Type',
       },
     });
 
   } catch (error) {
-    console.error('Error fetching products:', error);
+    console.error('Products API: Error fetching products:', error);
     return new Response(JSON.stringify({
       success: false, 
       error: 'Failed to fetch products',
-      message: error.message 
+      message: error.message
     }), {
       status: 500,
       headers: {
         'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
       },
     });
   }
@@ -78,6 +83,7 @@ export async function POST(request) {
       tags: tags || [],
       ingredients: ingredients || '',
       imageUrls: imageUrls || [], // Store array of image URLs
+      available: true, // Default to available when creating new products
       createdAt: serverTimestamp()
     });
 
@@ -244,6 +250,10 @@ export async function PUT(request) {
 
     if (body.hasOwnProperty('imageUrls')) {
       updateData.imageUrls = body.imageUrls || [];
+    }
+
+    if (body.hasOwnProperty('available')) {
+      updateData.available = Boolean(body.available);
     }
 
     // Update product using the actual Firebase path structure
