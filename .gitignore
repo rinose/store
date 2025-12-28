@@ -13,6 +13,9 @@
 # testing
 /coverage
 
+# firebase
+store-41d09-firebase-adminsdk-fbsvc-c8d7fe3dd9.json
+
 # next.js
 /.next/
 /out/
