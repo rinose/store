@@ -45,7 +45,8 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     await signOut(auth);
-    router.push("/"); // Reindirizza alla home page
+    console.log("Redirecting to /"); // Debugging log
+    router.push("/"); // Redirects to the home page
   };
 
   return (
