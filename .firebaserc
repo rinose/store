@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "store-41d09"
-  }
+    "default": "store-41d09",
+    "staging": "store-41d09"
+  },
+  "targets": {},
+  "etags": {}
 }

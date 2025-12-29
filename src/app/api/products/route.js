@@ -2,7 +2,7 @@ import { db } from '../../../firebase.js';
 import { collection, getDocs, addDoc, deleteDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
 
 // Configure for dynamic route to allow POST operations
-export const dynamic = 'force-dynamic';
+export const dynamic = 'force-static';
 
 // For testing: http://localhost:3000/api/products
 

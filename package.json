@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "export": "next export",
+    "generate-data": "node scripts/generate-products.js",
+    "fetch-products": "node scripts/fetchProducts.js"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",
