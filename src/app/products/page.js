@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useBasket } from '../../contexts/BasketContext';
+import { db } from "../../firebase";
+import { collection, getDocs } from "firebase/firestore";
 
 const ProductPage = () => {
   const { addToBasket, getBasketItemQuantity } = useBasket();
@@ -19,67 +21,32 @@ const ProductPage = () => {
   const [selectedProductForIngredients, setSelectedProductForIngredients] = useState(null);
 
   useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const productsRef = collection(db, "demo", "data", "products");
+        const querySnapshot = await getDocs(productsRef);
+
+        const productsList = [];
+        querySnapshot.forEach((doc) => {
+          productsList.push({
+            id: doc.id,
+            ...doc.data(),
+          });
+        });
+
+        setProducts(productsList);
+        setFilteredProducts(productsList);
+        extractTags(productsList);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+        setError("Si è verificato un errore nel caricamento dei prodotti.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
     fetchProducts();
   }, []);
-
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      console.log('Fetching products from /api/products...');
-      
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-      
-      const response = await fetch('/api/products', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeoutId);
-      
-      console.log('Response received:', response);
-      console.log('Response status:', response.status);
-      console.log('Response ok:', response.ok);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Response error text:', errorText);
-        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-      }
-      
-      const data = await response.json();
-      console.log('Response data:', data);
-      
-      if (data.success) {
-        setProducts(data.products);
-        console.log('Products fetched successfully:', data.products);
-        extractTags(data.products);
-      } else {
-        setError(data.error || 'Failed to fetch products');
-        console.error('Error in API response:', data.error);
-      }
-    } catch (err) {
-      console.error('Fetch error details:', err);
-      console.error('Error type:', err.constructor.name);
-      console.error('Error message:', err.message);
-      
-      if (err.name === 'AbortError') {
-        setError('Request timeout - please try again');
-      } else {
-        setError('Network error: ' + err.message);
-      }
-    } finally {
-      setLoading(false);
-      console.log('Loading state set to false');
-      console.log('Current products state:', products);
-      console.log('Current filteredProducts state:', filteredProducts);
-    }
-  };
 
   const extractTags = (products) => {
     const allTags = new Set();

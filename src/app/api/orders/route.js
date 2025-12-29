@@ -2,7 +2,7 @@ import { db } from '../../../firebase.js';
 import { collection, getDocs, addDoc, updateDoc, doc, query, orderBy, where } from 'firebase/firestore';
 
 // Configure for dynamic route to allow POST operations
-export const dynamic = 'force-dynamic';
+export const dynamic = 'force-static';
 
 // GET - Fetch all orders or orders for a specific customer email
 export async function GET(request) {
