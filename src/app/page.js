@@ -87,12 +87,6 @@ const getYouTubeEmbedUrl = (url) => {
             >
               Scopri le Nostre Creazioni
             </Link>
-            <Link
-              href="/categories"
-              className="border-2 border-brand-gold text-brand-gold hover:bg-brand-gold hover:text-brand-black px-8 py-4 rounded-full text-lg font-semibold transition-all duration-300"
-            >
-              Esplora le Categorie
-            </Link>
           </div>
 
           {/* Social Media Links */}
