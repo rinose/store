@@ -29,7 +29,9 @@ export default function RootLayout({ children }) {
         <BasketProvider>
           <AdminAuthProvider>
             <NavBar />
+            <main className="pt-20">{/* Padding top to offset fixed navbar */}
             {children}
+            </main>
           </AdminAuthProvider>
         </BasketProvider>
       </body>
