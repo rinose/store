@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { db } from '../../../firebase';
+import { collection, getDocs, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
 
 const AdminOrdersPage = () => {
   const [orders, setOrders] = useState([]);
@@ -14,15 +16,23 @@ const AdminOrdersPage = () => {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/orders');
-      const data = await response.json();
       
-      if (data.success) {
-        setOrders(data.orders || []);
-      } else {
-        setError(data.error || 'Failed to fetch orders');
-      }
+      // Fetch orders directly from Firestore
+      const ordersRef = collection(db, 'demo', 'data', 'orders');
+      const querySnapshot = await getDocs(ordersRef);
+      
+      const ordersList = [];
+      querySnapshot.forEach((doc) => {
+        ordersList.push({
+          id: doc.id,
+          ...doc.data()
+        });
+      });
+      
+      setOrders(ordersList || []);
+      setError(null);
     } catch (err) {
+      console.error('Error fetching orders:', err);
       setError('Network error: ' + err.message);
     } finally {
       setLoading(false);
@@ -31,31 +41,23 @@ const AdminOrdersPage = () => {
 
   const markOrderCompleted = async (orderId) => {
     try {
-      const response = await fetch('/api/orders', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          orderId: orderId,
-          status: 'completed'
-        }),
+      // Update order directly in Firestore
+      const orderRef = doc(db, 'demo', 'data', 'orders', orderId);
+      await updateDoc(orderRef, {
+        status: 'completed',
+        completedAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       });
 
-      const data = await response.json();
-      
-      if (data.success) {
-        // Update local state
-        setOrders(orders.map(order => 
-          order.id === orderId 
-            ? { ...order, status: 'completed', completedAt: new Date().toISOString() }
-            : order
-        ));
-        alert('Ordine marcato come completato!');
-      } else {
-        alert('Errore nell\'aggiornamento dell\'ordine: ' + (data.error || 'Unknown error'));
-      }
+      // Update local state
+      setOrders(orders.map(order => 
+        order.id === orderId 
+          ? { ...order, status: 'completed', completedAt: new Date().toISOString() }
+          : order
+      ));
+      alert('Ordine marcato come completato!');
     } catch (err) {
+      console.error('Error updating order:', err);
       alert('Errore di rete: ' + err.message);
     }
   };

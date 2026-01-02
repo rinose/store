@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { auth } from '../../firebase';
+import { auth, db } from '../../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 
 const OrdersPage = () => {
   const [user, setUser] = useState(null);
@@ -14,12 +15,15 @@ const OrdersPage = () => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      console.log('Auth state changed:', currentUser ? 'User logged in' : 'No user');
       if (currentUser) {
         setUser(currentUser);
+        setLoading(false);
         fetchUserOrders(currentUser.email); // Pass email instead of uid
       } else {
-        // Redirect to login if not authenticated
-        router.push('/login');
+        // User not logged in
+        setUser(null);
+        setLoading(false);
       }
     });
 
@@ -32,22 +36,27 @@ const OrdersPage = () => {
       setError(null);
       
       console.log('Fetching orders for customer email:', customerEmail);
-      const response = await fetch(`/api/orders?customerEmail=${encodeURIComponent(customerEmail)}`);
       
-      console.log('Orders response status:', response.status);
+      // Fetch orders directly from Firestore
+      const ordersRef = collection(db, 'demo', 'data', 'orders');
+      const q = query(
+        ordersRef,
+        where('customerEmail', '==', customerEmail),
+        orderBy('createdAt', 'desc')
+      );
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      const querySnapshot = await getDocs(q);
       
-      const data = await response.json();
-      console.log('Orders response data:', data);
+      const ordersList = [];
+      querySnapshot.forEach((doc) => {
+        ordersList.push({
+          id: doc.id,
+          ...doc.data()
+        });
+      });
       
-      if (data.success) {
-        setOrders(data.orders);
-      } else {
-        setError(data.error || 'Errore nel caricamento degli ordini');
-      }
+      console.log('Orders fetched:', ordersList.length);
+      setOrders(ordersList);
     } catch (err) {
       console.error('Orders fetch error details:', err);
       setError('Errore di rete nel caricamento degli ordini: ' + err.message);
@@ -123,6 +132,23 @@ const OrdersPage = () => {
         <h1 className="text-2xl font-bold mb-6">I miei ordini</h1>
         <div className="flex justify-center items-center h-32">
           <div className="text-lg">Caricamento ordini...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <h1 className="text-2xl font-bold mb-6">I miei ordini</h1>
+        <div className="text-center py-8">
+          <p className="text-gray-600 text-lg mb-4">Devi effettuare il login per visualizzare i tuoi ordini</p>
+          <button
+            onClick={() => router.push('/login')}
+            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+          >
+            Vai al Login
+          </button>
         </div>
       </div>
     );

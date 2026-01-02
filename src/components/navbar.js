@@ -52,7 +52,7 @@ export default function Navbar() {
   return (
     <Disclosure
       as="nav"
-      className="relative bg-[color:#aa8510] md:mx-auto md:w-4/5 md:my-2 md:rounded-full dark:bg-gray-800/50 dark:after:pointer-events-none dark:after:absolute dark:after:inset-x-0 dark:after:bottom-0 dark:after:h-px dark:after:bg-white/10"
+      className="fixed top-0 left-0 right-0 z-50 bg-[color:#aa8510] md:mx-auto md:w-4/5 md:my-2 md:rounded-full dark:bg-gray-800/50 dark:after:pointer-events-none dark:after:absolute dark:after:inset-x-0 dark:after:bottom-0 dark:after:h-px dark:after:bg-white/10"
     >
       <div className="mx-auto max-w-7xl md:px-2 sm:px-6 lg:px-8">
         <div className="relative flex h-16 items-center justify-between">
