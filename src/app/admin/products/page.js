@@ -292,13 +292,14 @@ const AdminProductsPage = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Descrizione</label>
+            <label className="block text-sm font-medium mb-1">Descrizione *</label>
             <textarea
               name="description"
               value={formData.description}
               onChange={handleInputChange}
               className="w-full border rounded px-3 py-2"
               rows="3"
+              required
             />
           </div>
 

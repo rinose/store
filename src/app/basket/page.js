@@ -23,6 +23,10 @@ const BasketPage = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [customerName, setCustomerName] = useState('');
+  const [customerSurname, setCustomerSurname] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
   
   // Use ref for immediate synchronous check - survives re-renders
   const checkoutLockRef = useRef(false);
@@ -80,6 +84,33 @@ const BasketPage = () => {
       return;
     }
 
+    // Validate customer information
+    if (!customerName.trim()) {
+      console.log('⚠️  BLOCKED: Name is empty');
+      alert('Inserisci il tuo nome');
+      return;
+    }
+    
+    if (!customerSurname.trim()) {
+      console.log('⚠️  BLOCKED: Surname is empty');
+      alert('Inserisci il tuo cognome');
+      return;
+    }
+    
+    if (!customerEmail.trim()) {
+      console.log('⚠️  BLOCKED: Email is empty');
+      alert('Inserisci la tua email');
+      return;
+    }
+    
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(customerEmail)) {
+      console.log('⚠️  BLOCKED: Invalid email format');
+      alert('Inserisci un indirizzo email valido');
+      return;
+    }
+
     // Set the SYNCHRONOUS lock IMMEDIATELY - this is checked instantly
     console.log('� SETTING SYNCHRONOUS LOCK: isCheckoutProcessing = true');
     isCheckoutProcessing = true;
@@ -131,7 +162,7 @@ const BasketPage = () => {
       console.log(`🔑 Generated unique reference: ${uniqueReference}`);
       
       // Create checkout session data
-      // Stripe will collect email during checkout
+      // Store customer information in metadata
       // Each addDoc creates a UNIQUE Firestore document ID automatically
       const sessionData = {
         mode: 'payment',
@@ -139,12 +170,17 @@ const BasketPage = () => {
         success_url: window.location.origin + '/products?checkout=success',
         cancel_url: window.location.origin + '/basket',
         client_reference_id: uniqueReference, // Unique ID to prevent Stripe idempotency conflicts
+        customer_email: customerEmail, // Stripe will prefill this
         automatic_tax: {
           enabled: false
         },
         metadata: {
           order_reference: uniqueReference,
-          timestamp: callTimestamp
+          timestamp: callTimestamp,
+          customer_name: customerName.trim(),
+          customer_surname: customerSurname.trim(),
+          customer_email: customerEmail.trim(),
+          customer_phone: customerPhone.trim()
         }
       };
 
@@ -242,7 +278,7 @@ const BasketPage = () => {
     console.log('═══════════════════════════════════════════════════════');
     console.log('🔵 handleCheckout COMPLETED');
     console.log('═══════════════════════════════════════════════════════');
-  }, [basketItems, loading, clearBasket]); // Dependencies for useCallback
+  }, [basketItems, loading, clearBasket, customerName, customerSurname, customerEmail, customerPhone]); // Dependencies for useCallback
 
 
   if (basketItems.length === 0) {
@@ -384,13 +420,83 @@ const BasketPage = () => {
         {/* Order Summary */}
         <div className="lg:col-span-1">
           <div className="bg-white rounded-lg shadow-md p-6 sticky top-6">
-            <h2 className="text-lg font-semibold mb-4">Riepilogo Ordine</h2>
+            <h2 className="text-lg font-semibold mb-4">Informazioni Cliente</h2>
             
             {error && (
               <div className="bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded mb-4 text-sm">
                 {error}
               </div>
             )}
+            
+            {/* Customer Information Form */}
+            <div className="space-y-3 mb-6">
+              <div>
+                <label htmlFor="customerName" className="block text-sm font-medium text-gray-700 mb-1">
+                  Nome <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="customerName"
+                  type="text"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  placeholder="Mario"
+                  required
+                  disabled={loading}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="customerSurname" className="block text-sm font-medium text-gray-700 mb-1">
+                  Cognome <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="customerSurname"
+                  type="text"
+                  value={customerSurname}
+                  onChange={(e) => setCustomerSurname(e.target.value)}
+                  placeholder="Rossi"
+                  required
+                  disabled={loading}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="customerEmail" className="block text-sm font-medium text-gray-700 mb-1">
+                  Email <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="customerEmail"
+                  type="email"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  placeholder="mario.rossi@email.com"
+                  required
+                  disabled={loading}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="customerPhone" className="block text-sm font-medium text-gray-700 mb-1">
+                  Telefono <span className="text-gray-400 text-xs">(opzionale)</span>
+                </label>
+                <input
+                  id="customerPhone"
+                  type="tel"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  placeholder="+39 333 123 4567"
+                  disabled={loading}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                />
+              </div>
+            </div>
+            
+            <hr className="my-4" />
+            
+            <h2 className="text-lg font-semibold mb-4">Riepilogo Ordine</h2>
             
             <div className="space-y-3">
               <div className="flex justify-between text-sm">

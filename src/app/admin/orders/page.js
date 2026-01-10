@@ -17,19 +17,79 @@ const AdminOrdersPage = () => {
     try {
       setLoading(true);
       
-      // Fetch orders directly from Firestore
-      const ordersRef = collection(db, 'demo', 'data', 'orders');
-      const querySnapshot = await getDocs(ordersRef);
+      // Fetch orders from Stripe checkout sessions in customers collection
+      const customersRef = collection(db, 'customers');
+      const customersSnapshot = await getDocs(customersRef);
       
       const ordersList = [];
-      querySnapshot.forEach((doc) => {
-        ordersList.push({
-          id: doc.id,
-          ...doc.data()
+      
+      // Iterate through all customers
+      for (const customerDoc of customersSnapshot.docs) {
+        const customerId = customerDoc.id;
+        
+        // Get all checkout sessions for this customer
+        const checkoutSessionsRef = collection(db, 'customers', customerId, 'checkout_sessions');
+        const sessionsSnapshot = await getDocs(checkoutSessionsRef);
+        
+        sessionsSnapshot.forEach((sessionDoc) => {
+          const sessionData = sessionDoc.data();
+          
+          // Parse line_items to extract products and calculate total
+          let items = [];
+          let total = 0;
+          
+          if (sessionData.line_items && Array.isArray(sessionData.line_items)) {
+            items = sessionData.line_items.map(item => {
+              const productData = item.price_data?.product_data || {};
+              const unitAmount = item.price_data?.unit_amount || 0;
+              const quantity = item.quantity || 1;
+              
+              total += (unitAmount * quantity);
+              
+              return {
+                name: productData.name || 'Prodotto senza nome',
+                description: productData.description || '',
+                quantity: quantity,
+                price: unitAmount / 100, // Convert cents to euros
+                images: productData.images || []
+              };
+            });
+          }
+          
+          // Convert total from cents to euros
+          total = total / 100;
+          
+          // Only include sessions with valid data
+          if (sessionData.sessionId || sessionData.created) {
+            const metadata = sessionData.metadata || {};
+            ordersList.push({
+              id: sessionDoc.id,
+              customerId: customerId,
+              sessionId: sessionData.sessionId,
+              items: items,
+              total: total,
+              createdAt: sessionData.created,
+              metadata: metadata,
+              customerName: metadata.customer_name || '',
+              customerSurname: metadata.customer_surname || '',
+              customerEmail: metadata.customer_email || '',
+              customerPhone: metadata.customer_phone || '',
+              status: sessionData.error ? 'error' : (sessionData.status || 'pending'),
+              error: sessionData.error,
+              url: sessionData.url
+            });
+          }
         });
+      }
+      
+      // Sort by date (most recent first)
+      ordersList.sort((a, b) => {
+        const dateA = a.createdAt?.seconds ? new Date(a.createdAt.seconds * 1000) : new Date(0);
+        const dateB = b.createdAt?.seconds ? new Date(b.createdAt.seconds * 1000) : new Date(0);
+        return dateB - dateA;
       });
       
-      setOrders(ordersList || []);
+      setOrders(ordersList);
       setError(null);
     } catch (err) {
       console.error('Error fetching orders:', err);
@@ -39,11 +99,11 @@ const AdminOrdersPage = () => {
     }
   };
 
-  const markOrderCompleted = async (orderId) => {
+  const markOrderCompleted = async (orderId, customerId) => {
     try {
-      // Update order directly in Firestore
-      const orderRef = doc(db, 'demo', 'data', 'orders', orderId);
-      await updateDoc(orderRef, {
+      // Update checkout session directly in Firestore
+      const sessionRef = doc(db, 'customers', customerId, 'checkout_sessions', orderId);
+      await updateDoc(sessionRef, {
         status: 'completed',
         completedAt: serverTimestamp(),
         updatedAt: serverTimestamp()
@@ -104,6 +164,7 @@ const AdminOrdersPage = () => {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
       case 'completed': return 'bg-green-100 text-green-800';
       case 'cancelled': return 'bg-red-100 text-red-800';
+      case 'error': return 'bg-red-200 text-red-900';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -161,7 +222,16 @@ const AdminOrdersPage = () => {
                   ID Ordine
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Cliente
+                  Email
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Nome
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Cognome
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Telefono
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Prodotti
@@ -187,11 +257,16 @@ const AdminOrdersPage = () => {
                     #{order.id?.slice(-8) || 'N/A'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <div>
-                      <div className="font-medium">{order.customerName || 'N/A'}</div>
-                      <div className="text-gray-500">{order.customerEmail || 'N/A'}</div>
-                      <div className="text-gray-500">{order.customerPhone || 'N/A'}</div>
-                    </div>
+                    {order.customerEmail || 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {order.customerName || 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {order.customerSurname || 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {order.customerPhone || '-'}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900">
                     <div className="max-w-xs">
@@ -213,13 +288,19 @@ const AdminOrdersPage = () => {
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>
                       {order.status === 'pending' ? 'In Attesa' :
                        order.status === 'completed' ? 'Completato' :
-                       order.status === 'cancelled' ? 'Annullato' : order.status}
+                       order.status === 'cancelled' ? 'Annullato' :
+                       order.status === 'error' ? 'Errore' : order.status}
                     </span>
+                    {order.error && (
+                      <div className="text-xs text-red-600 mt-1 max-w-xs">
+                        {order.error.message}
+                      </div>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     {order.status === 'pending' && (
                       <button
-                        onClick={() => markOrderCompleted(order.id)}
+                        onClick={() => markOrderCompleted(order.id, order.customerId)}
                         className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm transition-colors"
                       >
                         Segna Completato
