@@ -291,21 +291,13 @@ const ProductPage = () => {
                   </p>
                 </div>
                 
-                {/* Price and Category - Fixed height space */}
-                <div className="space-y-2 mb-4 min-h-[4rem]">
-                  <div className="min-h-[1.75rem]">
-                    {product.price ? (
-                      <p className="text-lg font-bold text-green-600">€{product.price.toFixed(2)}</p>
-                    ) : (
-                      <p className="text-lg font-bold text-gray-400">Prezzo non disponibile</p>
-                    )}
-                  </div>
-                  
-                  <div className="min-h-[1.25rem]">
-                    <p className="text-sm text-gray-500">
-                      Categoria: {product.category || "Non categorizzato"}
-                    </p>
-                  </div>
+                {/* Price - Fixed height space */}
+                <div className="mb-4 min-h-[1.75rem]">
+                  {product.price ? (
+                    <p className="text-lg font-bold text-green-600">€{product.price.toFixed(2)}</p>
+                  ) : (
+                    <p className="text-lg font-bold text-gray-400">Prezzo non disponibile</p>
+                  )}
                 </div>
 
                 {/* Tags - Fixed height space */}
@@ -367,8 +359,8 @@ const ProductPage = () => {
                       className="bg-white text-gray-700 px-3 py-2 rounded-md text-sm hover:bg-gray-200 transition-colors"
                       title="Vedi ingredienti"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
                       </svg>
 
                     </button>

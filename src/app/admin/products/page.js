@@ -18,7 +18,6 @@ const AdminProductsPage = () => {
     name: '',
     description: '',
     price: '',
-    category: '',
     tags: '',
     ingredients: ''
   });
@@ -137,7 +136,6 @@ const AdminProductsPage = () => {
         name: formData.name,
         description: formData.description || '',
         price: formData.price ? parseFloat(formData.price) : 0,
-        category: formData.category || '',
         tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [],
         ingredients: formData.ingredients || '',
         imageUrls: imageUrls,
@@ -151,7 +149,6 @@ const AdminProductsPage = () => {
         name: '',
         description: '',
         price: '',
-        category: '',
         tags: '',
         ingredients: ''
       });
@@ -295,43 +292,33 @@ const AdminProductsPage = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Descrizione</label>
+            <label className="block text-sm font-medium mb-1">Descrizione *</label>
             <textarea
               name="description"
               value={formData.description}
               onChange={handleInputChange}
               className="w-full border rounded px-3 py-2"
               rows="3"
+              required
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Prezzo (€)</label>
-              <input
-                type="number"
-                step="0.01"
-                name="price"
-                value={formData.price}
-                onChange={handleInputChange}
-                className="w-full border rounded px-3 py-2"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Categoria</label>
-              <input
-                type="text"
-                name="category"
-                value={formData.category}
-                onChange={handleInputChange}
-                className="w-full border rounded px-3 py-2"
-              />
-            </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Prezzo (€) *</label>
+            <input
+              type="number"
+              step="0.01"
+              name="price"
+              value={formData.price}
+              onChange={handleInputChange}
+              className="w-full border rounded px-3 py-2"
+              required
+              min="0"
+            />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Tags (separati da virgola)</label>
+            <label className="block text-sm font-medium mb-1">Tags (separati da virgola) *</label>
             <input
               type="text"
               name="tags"
@@ -339,33 +326,63 @@ const AdminProductsPage = () => {
               onChange={handleInputChange}
               className="w-full border rounded px-3 py-2"
               placeholder="es: dolce, senza glutine, vegano"
+              required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Ingredienti</label>
+            <label className="block text-sm font-medium mb-1">Ingredienti *</label>
             <textarea
               name="ingredients"
               value={formData.ingredients}
               onChange={handleInputChange}
               className="w-full border rounded px-3 py-2"
               rows="2"
+              required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Immagini</label>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={handleImageSelect}
-              className="w-full"
-            />
+            <label className="block text-sm font-medium mb-1">Immagini del Prodotto</label>
+            <div className="relative">
+              <input
+                id="file-upload"
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleImageSelect}
+                className="hidden"
+              />
+              <label
+                htmlFor="file-upload"
+                className="flex items-center justify-center w-full border-2 border-dashed border-gray-300 rounded-lg px-4 py-6 cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors"
+              >
+                <div className="text-center">
+                  <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <div className="mt-2">
+                    <span className="text-blue-600 font-semibold">Scegli immagini</span>
+                    <span className="text-gray-500 text-sm"> o trascina qui</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {selectedImages.length > 0 
+                      ? `${selectedImages.length} ${selectedImages.length === 1 ? 'file selezionato' : 'file selezionati'}`
+                      : 'Nessun file è stato scelto'
+                    }
+                  </p>
+                </div>
+              </label>
+            </div>
             {imagePreviews.length > 0 && (
-              <div className="flex gap-2 mt-2">
+              <div className="flex gap-2 mt-3 flex-wrap">
                 {imagePreviews.map((preview, idx) => (
-                  <img key={idx} src={preview} alt={`Preview ${idx}`} className="h-20 w-20 object-cover rounded" />
+                  <div key={idx} className="relative">
+                    <img src={preview} alt={`Anteprima ${idx + 1}`} className="h-24 w-24 object-cover rounded border-2 border-gray-200" />
+                    <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center">
+                      {idx + 1}
+                    </span>
+                  </div>
                 ))}
               </div>
             )}
@@ -493,41 +510,6 @@ const AdminProductsPage = () => {
                         </span>
                       )}
                     </div>
-
-                    {/* Category */}
-                    <div className="text-sm mb-2">
-                      <span className="font-medium">Categoria: </span>
-                      {editingField[product.id]?.field === 'category' ? (
-                        <div className="inline-flex gap-2">
-                          <input
-                            type="text"
-                            value={editingField[product.id].value}
-                            onChange={(e) => handleEditChange(product.id, e.target.value)}
-                            className="border rounded px-2 py-1"
-                          />
-                          <button
-                            onClick={() => saveEdit(product.id, 'category', product.name)}
-                            className="bg-green-500 text-white px-2 py-1 rounded text-xs"
-                          >
-                            Salva
-                          </button>
-                          <button
-                            onClick={() => cancelEdit(product.id)}
-                            className="bg-gray-400 text-white px-2 py-1 rounded text-xs"
-                          >
-                            Annulla
-                          </button>
-                        </div>
-                      ) : (
-                        <span 
-                          className="cursor-pointer hover:text-blue-600"
-                          onClick={() => startEdit(product.id, 'category', product.category)}
-                        >
-                          {product.category || 'Nessuna'}
-                        </span>
-                      )}
-                    </div>
-
                     {/* Tags */}
                     <div className="text-sm mb-2">
                       <span className="font-medium">Tags: </span>
