@@ -291,21 +291,13 @@ const ProductPage = () => {
                   </p>
                 </div>
                 
-                {/* Price and Category - Fixed height space */}
-                <div className="space-y-2 mb-4 min-h-[4rem]">
-                  <div className="min-h-[1.75rem]">
-                    {product.price ? (
-                      <p className="text-lg font-bold text-green-600">€{product.price.toFixed(2)}</p>
-                    ) : (
-                      <p className="text-lg font-bold text-gray-400">Prezzo non disponibile</p>
-                    )}
-                  </div>
-                  
-                  <div className="min-h-[1.25rem]">
-                    <p className="text-sm text-gray-500">
-                      Categoria: {product.category || "Non categorizzato"}
-                    </p>
-                  </div>
+                {/* Price - Fixed height space */}
+                <div className="mb-4 min-h-[1.75rem]">
+                  {product.price ? (
+                    <p className="text-lg font-bold text-green-600">€{product.price.toFixed(2)}</p>
+                  ) : (
+                    <p className="text-lg font-bold text-gray-400">Prezzo non disponibile</p>
+                  )}
                 </div>
 
                 {/* Tags - Fixed height space */}
