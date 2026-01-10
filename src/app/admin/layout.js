@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useAdminAuth } from '../../contexts/AdminAuthContext';
+import { useAdminAuth, AdminAuthProvider } from '../../contexts/AdminAuthContext';
 import ProtectedAdminRoute from '../../components/ProtectedAdminRoute';
 
 const AdminNavigation = ({ children }) => {
@@ -85,7 +85,9 @@ const AdminNavigation = ({ children }) => {
 
 const AdminLayout = ({ children }) => {
   return (
-    <AdminNavigation>{children}</AdminNavigation>
+    <AdminAuthProvider>
+      <AdminNavigation>{children}</AdminNavigation>
+    </AdminAuthProvider>
   );
 };
 
