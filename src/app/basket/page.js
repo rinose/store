@@ -304,22 +304,24 @@ const BasketPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Carrello ({getBasketItemsCount()} {getBasketItemsCount() === 1 ? 'articolo' : 'articoli'})</h1>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold">Carrello ({getBasketItemsCount()} {getBasketItemsCount() === 1 ? 'articolo' : 'articoli'})</h1>
         
-        <div className="flex gap-3">
+        <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
           <button
             onClick={handleContinueShopping}
-            className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition-colors"
+            className="flex-1 sm:flex-none bg-gray-500 text-white px-3 sm:px-4 py-2 rounded-md hover:bg-gray-600 transition-colors text-sm sm:text-base"
           >
-            Continua lo Shopping
+            <span className="hidden sm:inline">Continua lo Shopping</span>
+            <span className="sm:hidden">Continua</span>
           </button>
           
           <button
             onClick={handleClearBasket}
-            className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors"
+            className="flex-1 sm:flex-none bg-red-500 text-white px-3 sm:px-4 py-2 rounded-md hover:bg-red-600 transition-colors text-sm sm:text-base"
           >
-            Svuota Carrello
+            <span className="hidden sm:inline">Svuota Carrello</span>
+            <span className="sm:hidden">Svuota</span>
           </button>
         </div>
       </div>
@@ -333,9 +335,9 @@ const BasketPage = () => {
               
               <div className="space-y-4">
                 {basketItems.map((item) => (
-                  <div key={item.id} className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-lg">{item.name}</h3>
+                  <div key={item.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 border border-gray-200 rounded-lg">
+                    <div className="flex-1 w-full">
+                      <h3 className="font-semibold text-base sm:text-lg">{item.name}</h3>
                       
                       {item.description && (
                         <p className="text-gray-600 text-sm mt-1">{item.description}</p>
@@ -361,16 +363,16 @@ const BasketPage = () => {
                       )}
                     </div>
                     
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
                       {/* Quantity Controls */}
-                      <div className="flex items-center gap-2">
-                        <label htmlFor={`quantity-${item.id}`} className="text-sm text-gray-600">
+                      <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <label htmlFor={`quantity-${item.id}`} className="text-sm text-gray-600 whitespace-nowrap">
                           Quantità:
                         </label>
                         <div className="flex items-center">
                           <button
                             onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
-                            className="bg-gray-200 text-gray-700 px-2 py-1 rounded-l hover:bg-gray-300"
+                            className="bg-gray-200 text-gray-700 px-3 py-2 rounded-l hover:bg-gray-300"
                           >
                             -
                           </button>
@@ -380,11 +382,11 @@ const BasketPage = () => {
                             min="1"
                             value={item.quantity}
                             onChange={(e) => handleQuantityChange(item.id, parseInt(e.target.value) || 1)}
-                            className="w-16 px-2 py-1 text-center border-t border-b border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            className="w-16 px-2 py-2 text-center border-t border-b border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
                           />
                           <button
                             onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
-                            className="bg-gray-200 text-gray-700 px-2 py-1 rounded-r hover:bg-gray-300"
+                            className="bg-gray-200 text-gray-700 px-3 py-2 rounded-r hover:bg-gray-300"
                           >
                             +
                           </button>
@@ -392,23 +394,25 @@ const BasketPage = () => {
                       </div>
                       
                       {/* Price */}
-                      <div className="text-right min-w-[80px]">
-                        <p className="text-sm text-gray-600">
-                          €{item.price ? item.price.toFixed(2) : '0.00'} cad.
-                        </p>
-                        <p className="font-bold text-green-600">
-                          €{item.price ? (item.price * item.quantity).toFixed(2) : '0.00'}
-                        </p>
+                      <div className="flex justify-between items-center w-full sm:w-auto gap-4">
+                        <div className="text-left sm:text-right">
+                          <p className="text-sm text-gray-600">
+                            €{item.price ? item.price.toFixed(2) : '0.00'} cad.
+                          </p>
+                          <p className="font-bold text-green-600 text-base sm:text-lg">
+                            €{item.price ? (item.price * item.quantity).toFixed(2) : '0.00'}
+                          </p>
+                        </div>
+                        
+                        {/* Remove Button */}
+                        <button
+                          onClick={() => handleRemoveItem(item.id, item.name)}
+                          className="text-red-500 hover:text-red-700 transition-colors text-2xl p-1 flex-shrink-0"
+                          title="Rimuovi dal carrello"
+                        >
+                          🗑️
+                        </button>
                       </div>
-                      
-                      {/* Remove Button */}
-                      <button
-                        onClick={() => handleRemoveItem(item.id, item.name)}
-                        className="text-red-500 hover:text-red-700 transition-colors text-xl p-1"
-                        title="Rimuovi dal carrello"
-                      >
-                        🗑️
-                      </button>
                     </div>
                   </div>
                 ))}
@@ -442,7 +446,7 @@ const BasketPage = () => {
                   placeholder="Mario"
                   required
                   disabled={loading}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 text-gray-900 placeholder:text-gray-400"
                 />
               </div>
               
@@ -458,7 +462,7 @@ const BasketPage = () => {
                   placeholder="Rossi"
                   required
                   disabled={loading}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 text-gray-900 placeholder:text-gray-400"
                 />
               </div>
               
@@ -474,7 +478,7 @@ const BasketPage = () => {
                   placeholder="mario.rossi@email.com"
                   required
                   disabled={loading}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 text-gray-900 placeholder:text-gray-400"
                 />
               </div>
               
@@ -489,7 +493,7 @@ const BasketPage = () => {
                   onChange={(e) => setCustomerPhone(e.target.value)}
                   placeholder="+39 333 123 4567"
                   disabled={loading}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 text-gray-900 placeholder:text-gray-400"
                 />
               </div>
             </div>

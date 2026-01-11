@@ -19,6 +19,9 @@ const ProductPage = () => {
   // Modal state for ingredients
   const [showIngredientsModal, setShowIngredientsModal] = useState(false);
   const [selectedProductForIngredients, setSelectedProductForIngredients] = useState(null);
+  
+  // Notification state
+  const [notification, setNotification] = useState({ show: false, message: '' });
 
   useEffect(() => {
     async function fetchProducts() {
@@ -101,15 +104,19 @@ const ProductPage = () => {
 
   const handleAddToCart = (product) => {
     if (!product.price) {
-      alert('Non è possibile aggiungere al carrello un prodotto senza prezzo');
       return;
     }
     
     addToBasket(product, 1);
     
-    // Show success message
+    // Show animated notification
     const productName = product.name || 'Prodotto';
-    alert(`${productName} aggiunto al carrello!`);
+    setNotification({ show: true, message: `${productName} aggiunto!` });
+    
+    // Hide notification after animation
+    setTimeout(() => {
+      setNotification({ show: false, message: '' });
+    }, 2000);
   };
 
   const handleShowIngredients = (product) => {
@@ -335,7 +342,7 @@ const ProductPage = () => {
                       disabled={!product.price || product.available === false}
                       className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                         product.price && product.available !== false
-                          ? 'bg-brand-gold text-white hover:bg-brand-black focus:outline-none focus:ring-2 focus:ring-blue-500'
+                          ? 'bg-brand-gold text-brand-black hover:bg-brand-black hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-gold'
                           : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       }`}
                       title={
@@ -426,13 +433,6 @@ const ProductPage = () => {
                 )}
               </div>
 
-              {selectedProductForIngredients.category && (
-                <div className="mb-4">
-                  <h3 className="text-sm font-medium text-gray-700 mb-1">Categoria:</h3>
-                  <p className="text-gray-600">{selectedProductForIngredients.category}</p>
-                </div>
-              )}
-
               {selectedProductForIngredients.tags && selectedProductForIngredients.tags.length > 0 && (
                 <div className="mb-4">
                   <h3 className="text-sm font-medium text-gray-700 mb-2">Tags:</h3>
@@ -465,19 +465,39 @@ const ProductPage = () => {
                 >
                   Chiudi
                 </button>
-                {selectedProductForIngredients.price && (
+                {selectedProductForIngredients.price && selectedProductForIngredients.available !== false && (
                   <button
                     onClick={() => {
                       handleAddToCart(selectedProductForIngredients);
                       handleCloseIngredientsModal();
                     }}
-                    className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors"
+                    className="bg-brand-gold text-brand-black px-4 py-2 rounded-md hover:bg-brand-black hover:text-white transition-colors font-medium"
                   >
                     Aggiungi al carrello
                   </button>
                 )}
+                {selectedProductForIngredients.available === false && (
+                  <button
+                    disabled
+                    className="bg-gray-300 text-gray-500 px-4 py-2 rounded-md cursor-not-allowed font-medium"
+                  >
+                    Esaurito
+                  </button>
+                )}
               </div>
             </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Floating Notification */}
+      {notification.show && (
+        <div className="fixed top-20 right-4 z-50 animate-slide-in-right">
+          <div className="bg-brand-gold text-brand-black px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 animate-fade-out">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-5 h-5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="font-medium">{notification.message}</span>
           </div>
         </div>
       )}
