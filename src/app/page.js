@@ -70,7 +70,6 @@ const getYouTubeEmbedUrl = (url) => {
               alt="Logo"
               width={150}
               height={150}
-              style={{ width: "auto", height: "auto" }}
               className="mx-auto rounded-full shadow-2xl"
               priority
             />
