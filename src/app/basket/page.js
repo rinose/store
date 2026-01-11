@@ -335,85 +335,51 @@ const BasketPage = () => {
               
               <div className="space-y-4">
                 {basketItems.map((item) => (
-                  <div key={item.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 border border-gray-200 rounded-lg">
-                    <div className="flex-1 w-full">
-                      <h3 className="font-semibold text-base sm:text-lg">{item.name}</h3>
+                  <div key={item.id} className="flex items-start gap-3 p-3 sm:p-4 border border-gray-200 rounded-lg">
+                    {/* Product Info - Left side */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-base text-gray-900 mb-2">{item.name}</h3>
                       
-                      {item.description && (
-                        <p className="text-gray-600 text-sm mt-1">{item.description}</p>
-                      )}
-                      
-                      {item.category && (
-                        <p className="text-gray-500 text-sm">Categoria: {item.category}</p>
-                      )}
-                      
-                      {item.tags && item.tags.length > 0 && (
-                        <div className="mt-2">
-                          <div className="flex flex-wrap gap-1">
-                            {item.tags.map((tag, tagIndex) => (
-                              <span
-                                key={tagIndex}
-                                className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded"
-                              >
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
+                      {/* Price and Quantity Row */}
+                      <div className="flex items-center gap-4 mb-2">
+                        <div className="text-left">
+                          <p className="text-sm text-gray-600">
+                            €{item.price ? item.price.toFixed(2) : '0.00'} cad.
+                          </p>
+                          <p className="font-bold text-green-600 text-lg">
+                            €{item.price ? (item.price * item.quantity).toFixed(2) : '0.00'}
+                          </p>
                         </div>
-                      )}
-                    </div>
-                    
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
-                      {/* Quantity Controls */}
-                      <div className="flex items-center gap-2 w-full sm:w-auto">
-                        <label htmlFor={`quantity-${item.id}`} className="text-sm text-gray-600 whitespace-nowrap">
-                          Quantità:
-                        </label>
+                        
+                        {/* Quantity Controls - Inline */}
                         <div className="flex items-center">
                           <button
                             onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
-                            className="bg-gray-200 text-gray-700 px-3 py-2 rounded-l hover:bg-gray-300"
+                            className="bg-gray-200 text-gray-700 px-3 py-1.5 rounded-l hover:bg-gray-300 text-lg font-bold"
                           >
-                            -
+                            −
                           </button>
-                          <input
-                            id={`quantity-${item.id}`}
-                            type="number"
-                            min="1"
-                            value={item.quantity}
-                            onChange={(e) => handleQuantityChange(item.id, parseInt(e.target.value) || 1)}
-                            className="w-16 px-2 py-2 text-center border-t border-b border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
-                          />
+                          <div className="px-4 py-1.5 bg-white border-t border-b border-gray-200 text-center min-w-[3rem] font-semibold text-gray-900">
+                            {item.quantity}
+                          </div>
                           <button
                             onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
-                            className="bg-gray-200 text-gray-700 px-3 py-2 rounded-r hover:bg-gray-300"
+                            className="bg-gray-200 text-gray-700 px-3 py-1.5 rounded-r hover:bg-gray-300 text-lg font-bold"
                           >
                             +
                           </button>
                         </div>
                       </div>
-                      
-                      {/* Price */}
-                      <div className="flex justify-between items-center w-full sm:w-auto gap-4">
-                        <div className="text-left sm:text-right">
-                          <p className="text-sm text-gray-600">
-                            €{item.price ? item.price.toFixed(2) : '0.00'} cad.
-                          </p>
-                          <p className="font-bold text-green-600 text-base sm:text-lg">
-                            €{item.price ? (item.price * item.quantity).toFixed(2) : '0.00'}
-                          </p>
-                        </div>
-                        
-                        {/* Remove Button */}
-                        <button
-                          onClick={() => handleRemoveItem(item.id, item.name)}
-                          className="text-red-500 hover:text-red-700 transition-colors text-2xl p-1 flex-shrink-0"
-                          title="Rimuovi dal carrello"
-                        >
-                          🗑️
-                        </button>
-                      </div>
                     </div>
+                    
+                    {/* Remove Button - Right side */}
+                    <button
+                      onClick={() => handleRemoveItem(item.id, item.name)}
+                      className="text-red-500 hover:text-red-700 transition-colors text-2xl p-1 flex-shrink-0"
+                      title="Rimuovi dal carrello"
+                    >
+                      🗑️
+                    </button>
                   </div>
                 ))}
               </div>
