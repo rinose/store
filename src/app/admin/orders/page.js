@@ -198,12 +198,12 @@ const AdminOrdersPage = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Gestione Ordini</h1>
+    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 sm:mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold">Gestione Ordini</h1>
         <button 
           onClick={fetchOrders}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          className="w-full sm:w-auto px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors text-sm sm:text-base"
         >
           Aggiorna Lista
         </button>
@@ -214,7 +214,13 @@ const AdminOrdersPage = () => {
           <p className="text-lg">Nessun ordine trovato.</p>
         </div>
       ) : (
-        <div className="bg-white shadow rounded-lg overflow-x-auto">
+        <>
+          {/* Mobile scroll hint */}
+          <div className="block sm:hidden bg-blue-50 border border-blue-200 text-blue-700 px-3 py-2 rounded text-xs mb-3">
+            ☞ Scorri orizzontalmente per vedere tutte le colonne
+          </div>
+          
+          <div className="bg-white shadow rounded-lg overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 table-fixed">
             <thead className="bg-gray-50">
               <tr>
@@ -317,23 +323,24 @@ const AdminOrdersPage = () => {
             </tbody>
           </table>
         </div>
+        </>
       )}
 
       {/* Orders Summary */}
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="text-lg font-medium text-gray-900">Ordini Totali</h3>
-          <p className="text-2xl font-bold text-blue-600">{orders.length}</p>
+      <div className="mt-4 sm:mt-6 grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+        <div className="bg-white p-3 sm:p-4 rounded-lg shadow">
+          <h3 className="text-base sm:text-lg font-medium text-gray-900">Ordini Totali</h3>
+          <p className="text-xl sm:text-2xl font-bold text-blue-600">{orders.length}</p>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="text-lg font-medium text-gray-900">In Attesa</h3>
-          <p className="text-2xl font-bold text-yellow-600">
+        <div className="bg-white p-3 sm:p-4 rounded-lg shadow">
+          <h3 className="text-base sm:text-lg font-medium text-gray-900">In Attesa</h3>
+          <p className="text-xl sm:text-2xl font-bold text-yellow-600">
             {orders.filter(order => order.status === 'pending').length}
           </p>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="text-lg font-medium text-gray-900">Completati</h3>
-          <p className="text-2xl font-bold text-green-600">
+        <div className="bg-white p-3 sm:p-4 rounded-lg shadow">
+          <h3 className="text-base sm:text-lg font-medium text-gray-900">Completati</h3>
+          <p className="text-xl sm:text-2xl font-bold text-green-600">
             {orders.filter(order => order.status === 'completed').length}
           </p>
         </div>
