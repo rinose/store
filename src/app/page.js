@@ -31,7 +31,7 @@ export default function Home() {
   // Function to convert YouTube URL to embed URL
   // Function to convert YouTube URL to embed URL
 // Function to convert YouTube URL to embed URL
-const getYouTubeEmbedUrl = (url) => {
+const getYouTubeVideoId = (url) => {
   // Handle different YouTube URL formats
   let videoId = '';
   
@@ -43,8 +43,12 @@ const getYouTubeEmbedUrl = (url) => {
     videoId = url.split('youtube.com/watch?v=')[1].split('&')[0];
   }
   
-  // Use YouTube nocookie domain with minimal parameters
-  return `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1`;
+  return videoId;
+};
+
+const getYouTubeThumbnail = (url) => {
+  const videoId = getYouTubeVideoId(url);
+  return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
 };
   return (
     <div className="min-h-screen bg-brand-black">
@@ -201,25 +205,40 @@ const getYouTubeEmbedUrl = (url) => {
           ) : videos.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
               {videos.map((videoUrl, index) => (
-                <div key={index} className="bg-brand-black rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border border-brand-gold/20">
-                  <div className="relative aspect-video">
-                    <iframe
-                      src={getYouTubeEmbedUrl(videoUrl)}
-                      title={`Video ${index + 1} - Cristofaro Pastry Chef`}
-                      className="w-full h-full"
-                      frameBorder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    ></iframe>
+                <a 
+                  key={index} 
+                  href={videoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-brand-black rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border border-brand-gold/20 cursor-pointer group"
+                >
+                  <div className="relative aspect-video bg-gray-900">
+                    <img
+                      src={getYouTubeThumbnail(videoUrl)}
+                      alt={videoTitles[index] || `Video ${index + 1}`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.src = 'https://img.youtube.com/vi/' + getYouTubeVideoId(videoUrl) + '/hqdefault.jpg';
+                      }}
+                    />
+                    {/* Play button overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors">
+                      <div className="bg-red-600 rounded-full p-4 transform group-hover:scale-110 transition-transform">
+                        <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M8 5v14l11-7z"/>
+                        </svg>
+                      </div>
+                    </div>
                   </div>
                   <div className="p-6">
                     <h3 className="text-lg font-semibold text-white mb-2 text-center">
                       {videoTitles[index] || `Video ${index + 1}`}
                     </h3>
-                    <p className="text-gray-300 text-sm">
+                    <p className="text-gray-300 text-sm text-center">
+                      Clicca per guardare su YouTube
                     </p>
                   </div>
-                </div>
+                </a>
               ))}
             </div>
           ) : (
