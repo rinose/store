@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useBasket } from '../../contexts/BasketContext';
 import { useRouter } from 'next/navigation';
 import { db, auth } from '../../firebase';
@@ -17,7 +17,8 @@ const BasketPage = () => {
     updateQuantity,
     clearBasket,
     getBasketTotal,
-    getBasketItemsCount
+    getBasketItemsCount,
+    isLoading: basketLoading
   } = useBasket();
 
   const router = useRouter();
@@ -30,6 +31,47 @@ const BasketPage = () => {
   
   // Use ref for immediate synchronous check - survives re-renders
   const checkoutLockRef = useRef(false);
+  
+  // Load customer info from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedCustomerInfo = localStorage.getItem('customer-info');
+      if (savedCustomerInfo) {
+        const { name, surname, email, phone } = JSON.parse(savedCustomerInfo);
+        setCustomerName(name || '');
+        setCustomerSurname(surname || '');
+        setCustomerEmail(email || '');
+        setCustomerPhone(phone || '');
+      }
+    } catch (error) {
+      console.error('Error loading customer info:', error);
+    }
+  }, []);
+  
+  // Clear basket on successful payment and redirect to products
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('payment') === 'success') {
+      console.log('✅ Payment successful - clearing basket and redirecting to products');
+      clearBasket();
+      // Clear customer info on successful payment
+      localStorage.removeItem('customer-info');
+      router.push('/products');
+    }
+  }, [router]); // Only depend on router, not clearBasket to avoid infinite loop
+  
+  // Save customer info to localStorage whenever it changes
+  useEffect(() => {
+    if (customerName || customerSurname || customerEmail || customerPhone) {
+      const customerInfo = {
+        name: customerName,
+        surname: customerSurname,
+        email: customerEmail,
+        phone: customerPhone
+      };
+      localStorage.setItem('customer-info', JSON.stringify(customerInfo));
+    }
+  }, [customerName, customerSurname, customerEmail, customerPhone]);
 
   const handleQuantityChange = (productId, newQuantity) => {
     if (newQuantity < 1) {
@@ -110,6 +152,12 @@ const BasketPage = () => {
       alert('Inserisci un indirizzo email valido');
       return;
     }
+    
+    if (!customerPhone.trim()) {
+      console.log('⚠️  BLOCKED: Phone is empty');
+      alert('Inserisci il tuo numero di telefono');
+      return;
+    }
 
     // Set the SYNCHRONOUS lock IMMEDIATELY - this is checked instantly
     console.log('� SETTING SYNCHRONOUS LOCK: isCheckoutProcessing = true');
@@ -126,19 +174,17 @@ const BasketPage = () => {
     try {
       console.log('🚀 Starting Stripe Checkout Session creation process...');
       
-      // CRITICAL: Always sign out and create a NEW anonymous user
-      // This prevents idempotency key conflicts from reusing the same user
+      // Check if there's already an anonymous user, otherwise create one
+      let userId;
       if (auth.currentUser) {
-        console.log(`🔓 Signing out existing user: ${auth.currentUser.uid}`);
-        await signOut(auth);
-        console.log('✅ Signed out successfully');
+        userId = auth.currentUser.uid;
+        console.log(`✅ Using existing user: ${userId}`);
+      } else {
+        console.log('👤 Creating new anonymous user...');
+        const userCredential = await signInAnonymously(auth);
+        userId = userCredential.user.uid;
+        console.log(`✅ New anonymous user created: ${userId}`);
       }
-      
-      // Create a brand new anonymous user for this checkout session
-      console.log('👤 Creating new anonymous user...');
-      const userCredential = await signInAnonymously(auth);
-      const userId = userCredential.user.uid;
-      console.log(`✅ New anonymous user created: ${userId}`);
       
       // Create line items for Stripe
       const line_items = basketItems.map(item => ({
@@ -154,7 +200,26 @@ const BasketPage = () => {
         quantity: item.quantity
       }));
       
-      console.log(`📦 Created ${line_items.length} line items for Stripe`);
+      // Add shipping cost if order is under €50
+      const subtotal = getBasketTotal();
+      if (subtotal < 50) {
+        line_items.push({
+          price_data: {
+            currency: 'eur',
+            product_data: {
+              name: 'Spedizione',
+              description: 'Costo di spedizione (Gratuita per ordini da €50)'
+            },
+            unit_amount: 700, // €7.00 in cents
+          },
+          quantity: 1
+        });
+        console.log('📦 Added shipping cost: €7.00');
+      } else {
+        console.log('📦 Free shipping applied (order >= €50)');
+      }
+      
+      console.log(`📦 Created ${line_items.length} line items for Stripe (including shipping if applicable)`);
       
       // Generate a unique reference for this checkout attempt
       // Use microseconds + random to ensure absolute uniqueness
@@ -167,11 +232,14 @@ const BasketPage = () => {
       const sessionData = {
         mode: 'payment',
         line_items: line_items,
-        success_url: window.location.origin + '/products?checkout=success',
+        success_url: window.location.origin + '/basket?payment=success',
         cancel_url: window.location.origin + '/basket',
         client_reference_id: uniqueReference, // Unique ID to prevent Stripe idempotency conflicts
         customer_email: customerEmail, // Stripe will prefill this
         automatic_tax: {
+          enabled: false
+        },
+        tax_id_collection: {
           enabled: false
         },
         metadata: {
@@ -242,8 +310,7 @@ const BasketPage = () => {
           console.log('✅ Stripe checkout URL received!');
           console.log('🌐 Redirecting to:', data.url);
           clearTimeout(timeoutId);
-          clearBasket();
-          console.log('🧹 Basket cleared');
+          // Note: We DON'T clear basket here - only clear on successful payment
           // Note: We DON'T release the lock here because we're redirecting away
           // The page will reload/navigate, so the lock will be reset naturally
           console.log('🚀 Initiating redirect...');
@@ -280,6 +347,18 @@ const BasketPage = () => {
     console.log('═══════════════════════════════════════════════════════');
   }, [basketItems, loading, clearBasket, customerName, customerSurname, customerEmail, customerPhone]); // Dependencies for useCallback
 
+  // Show loading state while basket is being loaded from localStorage
+  if (basketLoading) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <h1 className="text-2xl font-bold mb-6">Carrello</h1>
+        <div className="text-center py-16">
+          <div className="text-4xl mb-4">⏳</div>
+          <p className="text-gray-500">Caricamento...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (basketItems.length === 0) {
     return (
@@ -450,7 +529,7 @@ const BasketPage = () => {
               
               <div>
                 <label htmlFor="customerPhone" className="block text-sm font-medium text-gray-700 mb-1">
-                  Telefono <span className="text-gray-400 text-xs">(opzionale)</span>
+                  Telefono <span className="text-red-500">*</span>
                 </label>
                 <input
                   id="customerPhone"
@@ -458,6 +537,7 @@ const BasketPage = () => {
                   value={customerPhone}
                   onChange={(e) => setCustomerPhone(e.target.value)}
                   placeholder="+39 333 123 4567"
+                  required
                   disabled={loading}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 text-gray-900 placeholder:text-gray-400"
                 />
@@ -474,16 +554,31 @@ const BasketPage = () => {
                 <span>€{getBasketTotal().toFixed(2)}</span>
               </div>
               
-              <div className="flex justify-between text-sm">
-                <span>Spedizione:</span>
-                <span className="text-green-600">Gratuita</span>
+              <div>
+                <div className="flex justify-between text-sm">
+                  <span>Spedizione:</span>
+                  {getBasketTotal() >= 50 ? (
+                    <span className="text-green-600 font-semibold">Gratuita</span>
+                  ) : (
+                    <span>€7.00</span>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {getBasketTotal() >= 50 ? (
+                    "🎉 Hai la spedizione gratuita!"
+                  ) : (
+                    "Spedizione gratuita per ordini da €50"
+                  )}
+                </p>
               </div>
               
               <hr className="my-3" />
               
               <div className="flex justify-between text-lg font-bold">
                 <span>Totale:</span>
-                <span className="text-green-600">€{getBasketTotal().toFixed(2)}</span>
+                <span className="text-green-600">
+                  €{(getBasketTotal() >= 50 ? getBasketTotal() : getBasketTotal() + 7).toFixed(2)}
+                </span>
               </div>
             </div>
             
