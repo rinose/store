@@ -19,7 +19,8 @@ const AdminProductsPage = () => {
     description: '',
     price: '',
     tags: '',
-    ingredients: ''
+    ingredients: '',
+    allergens: ''
   });
 
   // Image upload states
@@ -138,6 +139,7 @@ const AdminProductsPage = () => {
         price: formData.price ? parseFloat(formData.price) : 0,
         tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [],
         ingredients: formData.ingredients || '',
+        allergens: formData.allergens || '',
         imageUrls: imageUrls,
         available: true,
         createdAt: serverTimestamp(),
@@ -150,7 +152,8 @@ const AdminProductsPage = () => {
         description: '',
         price: '',
         tags: '',
-        ingredients: ''
+        ingredients: '',
+        allergens: ''
       });
       
       clearImageSelection();
@@ -340,6 +343,19 @@ const AdminProductsPage = () => {
               rows="2"
               required
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Allergeni</label>
+            <input
+              type="text"
+              name="allergens"
+              value={formData.allergens}
+              onChange={handleInputChange}
+              className="w-full border rounded px-3 py-2"
+              placeholder="es. glutine, lattosio, frutta a guscio"
+            />
+            <p className="text-xs text-gray-500 mt-1">Separa gli allergeni con una virgola</p>
           </div>
 
           <div>
@@ -575,6 +591,41 @@ const AdminProductsPage = () => {
                           onClick={() => startEdit(product.id, 'ingredients', product.ingredients)}
                         >
                           {product.ingredients || 'Nessuno'}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Allergens */}
+                    <div className="text-sm mb-2">
+                      <span className="font-medium">Allergeni: </span>
+                      {editingField[product.id]?.field === 'allergens' ? (
+                        <div className="flex gap-2 mt-1">
+                          <input
+                            type="text"
+                            value={editingField[product.id].value}
+                            onChange={(e) => handleEditChange(product.id, e.target.value)}
+                            className="flex-1 border rounded px-2 py-1"
+                            placeholder="es. glutine, lattosio"
+                          />
+                          <button
+                            onClick={() => saveEdit(product.id, 'allergens', product.name)}
+                            className="bg-green-500 text-white px-2 py-1 rounded text-xs"
+                          >
+                            Salva
+                          </button>
+                          <button
+                            onClick={() => cancelEdit(product.id)}
+                            className="bg-gray-400 text-white px-2 py-1 rounded text-xs"
+                          >
+                            Annulla
+                          </button>
+                        </div>
+                      ) : (
+                        <span 
+                          className="cursor-pointer hover:text-blue-600"
+                          onClick={() => startEdit(product.id, 'allergens', product.allergens || '')}
+                        >
+                          {product.allergens || 'Nessuno'}
                         </span>
                       )}
                     </div>
