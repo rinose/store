@@ -14,6 +14,7 @@ export const useBasket = () => {
 
 export const BasketProvider = ({ children }) => {
   const [basketItems, setBasketItems] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Load basket from localStorage on mount
   useEffect(() => {
@@ -24,6 +25,8 @@ export const BasketProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Error loading basket from localStorage:', error);
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
@@ -102,7 +105,8 @@ export const BasketProvider = ({ children }) => {
     clearBasket,
     getBasketTotal,
     getBasketItemsCount,
-    getBasketItemQuantity
+    getBasketItemQuantity,
+    isLoading
   };
 
   return (
