@@ -308,7 +308,7 @@ const ProductPage = () => {
                 </div>
 
                 {/* Tags - Fixed height space */}
-                <div className="mb-4 min-h-[3rem]">
+                <div className="mb-2 min-h-[3rem]">
                   <p className="text-xs text-gray-500 mb-1">Tags:</p>
                   <div className="flex flex-wrap gap-1">
                     {product.tags && product.tags.length > 0 ? (
@@ -333,6 +333,14 @@ const ProductPage = () => {
                     )}
                   </div>
                 </div>
+
+                {/* Allergens */}
+                {product.allergens && (
+                  <div className="mb-4">
+                    <p className="text-xs text-red-600 font-medium mb-1">⚠️ ALLERGENI:</p>
+                    <p className="text-xs text-gray-900 uppercase">{product.allergens}</p>
+                  </div>
+                )}
 
                 {/* Buttons - Always at bottom */}
                 <div className="mt-auto">
@@ -428,6 +436,23 @@ const ProductPage = () => {
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <p className="text-gray-500 italic">
                       Nessun ingrediente disponibile per questo prodotto.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="mb-4">
+                <h3 className="text-sm font-medium text-red-600 mb-2">⚠️ ALLERGENI:</h3>
+                {selectedProductForIngredients.allergens ? (
+                  <div className="bg-red-50 border border-red-200 p-4 rounded-lg">
+                    <p className="text-gray-800 text-base uppercase">
+                      {selectedProductForIngredients.allergens}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
+                    <p className="text-gray-500">
+                      Nessuno
                     </p>
                   </div>
                 )}
