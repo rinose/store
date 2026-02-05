@@ -22,6 +22,9 @@ const ProductPage = () => {
   
   // Notification state
   const [notification, setNotification] = useState({ show: false, message: '' });
+  
+  // Image carousel state - track current image index for each product
+  const [currentImageIndex, setCurrentImageIndex] = useState({});
 
   useEffect(() => {
     async function fetchProducts() {
@@ -127,6 +130,24 @@ const ProductPage = () => {
   const handleCloseIngredientsModal = () => {
     setShowIngredientsModal(false);
     setSelectedProductForIngredients(null);
+  };
+
+  // Navigate to next image in carousel
+  const handleNextImage = (productId, totalImages, e) => {
+    e.stopPropagation(); // Prevent card click
+    setCurrentImageIndex(prev => ({
+      ...prev,
+      [productId]: ((prev[productId] || 0) + 1) % totalImages
+    }));
+  };
+
+  // Navigate to previous image in carousel
+  const handlePrevImage = (productId, totalImages, e) => {
+    e.stopPropagation(); // Prevent card click
+    setCurrentImageIndex(prev => ({
+      ...prev,
+      [productId]: ((prev[productId] || 0) - 1 + totalImages) % totalImages
+    }));
   };
 
   if (loading) {
@@ -246,7 +267,7 @@ const ProductPage = () => {
                 </div>
               )}
 
-              {/* Product Image - Fixed height */}
+              {/* Product Image - Fixed height with carousel */}
               <div className="h-48 overflow-hidden relative bg-gray-100 group">
                 {(() => {
                   // Support both new imageUrls array and legacy imageUrl
@@ -262,11 +283,13 @@ const ProductPage = () => {
                     );
                   }
                   
+                  const currentIndex = currentImageIndex[product.id] || 0;
+                  
                   return (
                     <div className="relative w-full h-full">
                       <img
-                        src={images[0]}
-                        alt={product.name}
+                        src={images[currentIndex]}
+                        alt={`${product.name} - ${currentIndex + 1}`}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                         onError={(e) => {
                           e.target.style.display = 'none';
@@ -276,10 +299,32 @@ const ProductPage = () => {
                       <div className="hidden w-full h-full items-center justify-center text-gray-400">
                         <span className="text-sm">Errore caricamento</span>
                       </div>
+                      
+                      {/* Image counter badge */}
                       {images.length > 1 && (
                         <div className="absolute top-2 right-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs">
-                          +{images.length - 1} foto
+                          {currentIndex + 1}/{images.length}
                         </div>
+                      )}
+                      
+                      {/* Navigation arrows - only show if multiple images */}
+                      {images.length > 1 && (
+                        <>
+                          <button
+                            onClick={(e) => handlePrevImage(product.id, images.length, e)}
+                            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-75 text-white w-8 h-8 rounded-full flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
+                            aria-label="Immagine precedente"
+                          >
+                            ‹
+                          </button>
+                          <button
+                            onClick={(e) => handleNextImage(product.id, images.length, e)}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-75 text-white w-8 h-8 rounded-full flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
+                            aria-label="Immagine successiva"
+                          >
+                            ›
+                          </button>
+                        </>
                       )}
                     </div>
                   );
