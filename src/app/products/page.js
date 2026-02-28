@@ -26,6 +26,30 @@ const ProductPage = () => {
   // Image carousel state - track current image index for each product
   const [currentImageIndex, setCurrentImageIndex] = useState({});
 
+  // Lightbox state
+  const [lightbox, setLightbox] = useState({ open: false, images: [], index: 0, productName: '' });
+
+  const openLightbox = (images, index, productName, e) => {
+    e.stopPropagation();
+    setLightbox({ open: true, images, index, productName });
+  };
+
+  const closeLightbox = () => setLightbox(lb => ({ ...lb, open: false }));
+
+  const lightboxNext = () => setLightbox(lb => ({ ...lb, index: (lb.index + 1) % lb.images.length }));
+  const lightboxPrev = () => setLightbox(lb => ({ ...lb, index: (lb.index - 1 + lb.images.length) % lb.images.length }));
+
+  useEffect(() => {
+    if (!lightbox.open) return;
+    const onKey = (e) => {
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowRight') lightboxNext();
+      if (e.key === 'ArrowLeft') lightboxPrev();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [lightbox.open]);
+
   useEffect(() => {
     async function fetchProducts() {
       try {
@@ -267,14 +291,14 @@ const ProductPage = () => {
                 </div>
               )}
 
-              {/* Product Image - Fixed height with carousel */}
-              <div className="h-48 overflow-hidden relative bg-gray-100 group">
+              {/* Product Image - Aspect ratio container with blurred backdrop */}
+              <div className="aspect-[4/3] overflow-hidden relative bg-gray-100 group">
                 {(() => {
                   // Support both new imageUrls array and legacy imageUrl
-                  const images = product.imageUrls && product.imageUrls.length > 0 
-                    ? product.imageUrls 
+                  const images = product.imageUrls && product.imageUrls.length > 0
+                    ? product.imageUrls
                     : (product.imageUrl ? [product.imageUrl] : []);
-                  
+
                   if (images.length === 0) {
                     return (
                       <div className="w-full h-full flex items-center justify-center text-gray-400">
@@ -282,23 +306,37 @@ const ProductPage = () => {
                       </div>
                     );
                   }
-                  
+
                   const currentIndex = currentImageIndex[product.id] || 0;
-                  
+
                   return (
                     <div className="relative w-full h-full">
-                      <img
-                        src={images[currentIndex]}
-                        alt={`${product.name} - ${currentIndex + 1}`}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'flex';
-                        }}
-                      />
-                      <div className="hidden w-full h-full items-center justify-center text-gray-400">
-                        <span className="text-sm">Errore caricamento</span>
-                      </div>
+                      {/* All images are rendered and preloaded at mount time.
+                          Only the active one is visible — switching is pure CSS, no network wait. */}
+                      {images.map((src, idx) => (
+                        <div
+                          key={idx}
+                          className="absolute inset-0 transition-opacity duration-300 cursor-zoom-in"
+                          style={{ opacity: idx === currentIndex ? 1 : 0, pointerEvents: idx === currentIndex ? 'auto' : 'none' }}
+                          onClick={(e) => openLightbox(images, idx, product.name, e)}
+                        >
+                          {/* Blurred backdrop fills dead space with the image's own colours */}
+                          <div
+                            className="absolute inset-0 scale-110 blur-xl"
+                            style={{
+                              backgroundImage: `url(${src})`,
+                              backgroundSize: 'cover',
+                              backgroundPosition: 'center',
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-white/25" />
+                          <img
+                            src={src}
+                            alt={`${product.name} - ${idx + 1}`}
+                            className="relative w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                          />
+                        </div>
+                      ))}
                       
                       {/* Image counter badge */}
                       {images.length > 1 && (
@@ -560,6 +598,86 @@ const ProductPage = () => {
         </div>
       )}
       
+      {/* Lightbox */}
+      {lightbox.open && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
+          onClick={closeLightbox}
+        >
+          {/* Close button */}
+          <button
+            onClick={closeLightbox}
+            className="absolute top-4 right-4 text-white bg-white/10 hover:bg-white/20 rounded-full w-10 h-10 flex items-center justify-center text-xl transition-colors"
+            aria-label="Chiudi"
+          >
+            ✕
+          </button>
+
+          {/* Product name */}
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 text-white font-semibold text-lg px-4 text-center">
+            {lightbox.productName}
+          </div>
+
+          {/* Main image */}
+          <div
+            className="relative max-w-4xl w-full mx-4 flex items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={lightbox.images[lightbox.index]}
+              alt={`${lightbox.productName} - ${lightbox.index + 1}`}
+              className="max-h-[80vh] max-w-full object-contain rounded-lg shadow-2xl"
+            />
+
+            {/* Prev arrow */}
+            {lightbox.images.length > 1 && (
+              <button
+                onClick={lightboxPrev}
+                className="absolute left-0 -translate-x-12 bg-white/10 hover:bg-white/25 text-white w-10 h-10 rounded-full flex items-center justify-center text-2xl transition-colors"
+                aria-label="Precedente"
+              >
+                ‹
+              </button>
+            )}
+
+            {/* Next arrow */}
+            {lightbox.images.length > 1 && (
+              <button
+                onClick={lightboxNext}
+                className="absolute right-0 translate-x-12 bg-white/10 hover:bg-white/25 text-white w-10 h-10 rounded-full flex items-center justify-center text-2xl transition-colors"
+                aria-label="Successiva"
+              >
+                ›
+              </button>
+            )}
+          </div>
+
+          {/* Dot navigation */}
+          {lightbox.images.length > 1 && (
+            <div
+              className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {lightbox.images.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setLightbox(lb => ({ ...lb, index: i }))}
+                  className={`w-2.5 h-2.5 rounded-full transition-colors ${i === lightbox.index ? 'bg-white' : 'bg-white/35 hover:bg-white/60'}`}
+                  aria-label={`Immagine ${i + 1}`}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Counter */}
+          {lightbox.images.length > 1 && (
+            <div className="absolute bottom-6 right-6 text-white/60 text-sm">
+              {lightbox.index + 1} / {lightbox.images.length}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Floating Notification */}
       {notification.show && (
         <div className="fixed top-20 right-4 z-50 animate-slide-in-right">
