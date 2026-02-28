@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useBasket } from '../../contexts/BasketContext';
 import { db } from "../../firebase";
 import { collection, getDocs } from "firebase/firestore";
@@ -158,7 +158,7 @@ const ProductPage = () => {
 
   // Navigate to next image in carousel
   const handleNextImage = (productId, totalImages, e) => {
-    e.stopPropagation(); // Prevent card click
+    e.stopPropagation();
     setCurrentImageIndex(prev => ({
       ...prev,
       [productId]: ((prev[productId] || 0) + 1) % totalImages
@@ -167,11 +167,32 @@ const ProductPage = () => {
 
   // Navigate to previous image in carousel
   const handlePrevImage = (productId, totalImages, e) => {
-    e.stopPropagation(); // Prevent card click
+    e.stopPropagation();
     setCurrentImageIndex(prev => ({
       ...prev,
       [productId]: ((prev[productId] || 0) - 1 + totalImages) % totalImages
     }));
+  };
+
+  // Touch swipe support
+  const touchStartX = useRef(null);
+
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (productId, totalImages, e) => {
+    if (touchStartX.current === null) return;
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    touchStartX.current = null;
+    if (Math.abs(diff) < 40) return; // too short — ignore
+    if (diff > 0) {
+      // swiped left → next
+      setCurrentImageIndex(prev => ({ ...prev, [productId]: ((prev[productId] || 0) + 1) % totalImages }));
+    } else {
+      // swiped right → prev
+      setCurrentImageIndex(prev => ({ ...prev, [productId]: ((prev[productId] || 0) - 1 + totalImages) % totalImages }));
+    }
   };
 
   if (loading) {
@@ -310,7 +331,11 @@ const ProductPage = () => {
                   const currentIndex = currentImageIndex[product.id] || 0;
 
                   return (
-                    <div className="relative w-full h-full">
+                    <div
+                      className="relative w-full h-full"
+                      onTouchStart={handleTouchStart}
+                      onTouchEnd={(e) => handleTouchEnd(product.id, images.length, e)}
+                    >
                       {/* All images are rendered and preloaded at mount time.
                           Only the active one is visible — switching is pure CSS, no network wait. */}
                       {images.map((src, idx) => (
@@ -345,19 +370,19 @@ const ProductPage = () => {
                         </div>
                       )}
                       
-                      {/* Navigation arrows - only show if multiple images */}
+                      {/* Navigation arrows — always visible on mobile, hover-only on desktop */}
                       {images.length > 1 && (
                         <>
                           <button
                             onClick={(e) => handlePrevImage(product.id, images.length, e)}
-                            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-75 text-white w-8 h-8 rounded-full flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
+                            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white w-10 h-10 rounded-full flex items-center justify-center text-2xl transition-all md:opacity-0 md:group-hover:opacity-100 shadow-lg"
                             aria-label="Immagine precedente"
                           >
                             ‹
                           </button>
                           <button
                             onClick={(e) => handleNextImage(product.id, images.length, e)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-75 text-white w-8 h-8 rounded-full flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white w-10 h-10 rounded-full flex items-center justify-center text-2xl transition-all md:opacity-0 md:group-hover:opacity-100 shadow-lg"
                             aria-label="Immagine successiva"
                           >
                             ›
@@ -601,78 +626,78 @@ const ProductPage = () => {
       {/* Lightbox */}
       {lightbox.open && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/90"
           onClick={closeLightbox}
         >
-          {/* Close button */}
-          <button
-            onClick={closeLightbox}
-            className="absolute top-4 right-4 text-white bg-white/10 hover:bg-white/20 rounded-full w-10 h-10 flex items-center justify-center text-xl transition-colors"
-            aria-label="Chiudi"
-          >
-            ✕
-          </button>
-
-          {/* Product name */}
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 text-white font-semibold text-lg px-4 text-center">
-            {lightbox.productName}
+          {/* Top bar: product name + close */}
+          <div className="w-full flex items-center justify-between px-4 py-3 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+            <span className="text-white font-semibold text-base truncate pr-4">{lightbox.productName}</span>
+            <button
+              onClick={closeLightbox}
+              className="text-white bg-white/10 hover:bg-white/20 rounded-full w-9 h-9 flex items-center justify-center text-lg transition-colors flex-shrink-0"
+              aria-label="Chiudi"
+            >
+              ✕
+            </button>
           </div>
 
-          {/* Main image */}
+          {/* Main image with prev/next arrows inside */}
           <div
-            className="relative max-w-4xl w-full mx-4 flex items-center justify-center"
+            className="relative flex-1 w-full flex items-center justify-center px-4 min-h-0"
             onClick={(e) => e.stopPropagation()}
+            onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
+            onTouchEnd={(e) => {
+              if (touchStartX.current === null) return;
+              const diff = touchStartX.current - e.changedTouches[0].clientX;
+              touchStartX.current = null;
+              if (Math.abs(diff) < 40) return;
+              diff > 0 ? lightboxNext() : lightboxPrev();
+            }}
           >
             <img
               src={lightbox.images[lightbox.index]}
               alt={`${lightbox.productName} - ${lightbox.index + 1}`}
-              className="max-h-[80vh] max-w-full object-contain rounded-lg shadow-2xl"
+              className="max-h-full max-w-full object-contain rounded-lg shadow-2xl"
             />
 
-            {/* Prev arrow */}
             {lightbox.images.length > 1 && (
-              <button
-                onClick={lightboxPrev}
-                className="absolute left-0 -translate-x-12 bg-white/10 hover:bg-white/25 text-white w-10 h-10 rounded-full flex items-center justify-center text-2xl transition-colors"
-                aria-label="Precedente"
-              >
-                ‹
-              </button>
-            )}
-
-            {/* Next arrow */}
-            {lightbox.images.length > 1 && (
-              <button
-                onClick={lightboxNext}
-                className="absolute right-0 translate-x-12 bg-white/10 hover:bg-white/25 text-white w-10 h-10 rounded-full flex items-center justify-center text-2xl transition-colors"
-                aria-label="Successiva"
-              >
-                ›
-              </button>
+              <>
+                <button
+                  onClick={lightboxPrev}
+                  className="absolute left-6 bg-black/50 hover:bg-black/75 text-white w-11 h-11 rounded-full flex items-center justify-center text-3xl transition-colors shadow-lg"
+                  aria-label="Precedente"
+                >
+                  ‹
+                </button>
+                <button
+                  onClick={lightboxNext}
+                  className="absolute right-6 bg-black/50 hover:bg-black/75 text-white w-11 h-11 rounded-full flex items-center justify-center text-3xl transition-colors shadow-lg"
+                  aria-label="Successiva"
+                >
+                  ›
+                </button>
+              </>
             )}
           </div>
 
-          {/* Dot navigation */}
+          {/* Thumbnail strip — makes it immediately obvious there are more images */}
           {lightbox.images.length > 1 && (
             <div
-              className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2"
+              className="flex-shrink-0 w-full px-4 py-3 flex gap-2 justify-center overflow-x-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              {lightbox.images.map((_, i) => (
+              {lightbox.images.map((src, i) => (
                 <button
                   key={i}
                   onClick={() => setLightbox(lb => ({ ...lb, index: i }))}
-                  className={`w-2.5 h-2.5 rounded-full transition-colors ${i === lightbox.index ? 'bg-white' : 'bg-white/35 hover:bg-white/60'}`}
+                  className={`flex-shrink-0 w-14 h-14 rounded-md overflow-hidden border-2 transition-all ${
+                    i === lightbox.index ? 'border-white scale-110' : 'border-white/20 opacity-50 hover:opacity-80'
+                  }`}
                   aria-label={`Immagine ${i + 1}`}
-                />
+                >
+                  <img src={src} alt={`${lightbox.productName} - ${i + 1}`} className="w-full h-full object-cover" />
+                </button>
               ))}
-            </div>
-          )}
-
-          {/* Counter */}
-          {lightbox.images.length > 1 && (
-            <div className="absolute bottom-6 right-6 text-white/60 text-sm">
-              {lightbox.index + 1} / {lightbox.images.length}
             </div>
           )}
         </div>
