@@ -165,13 +165,17 @@ const getYouTubeThumbnail = (url) => {
                 La Nostra <span className="text-brand-gold">Storia</span>
               </h2>
               <p className="text-gray-300 text-lg leading-relaxed mb-6">
-                Con anni di esperienza e una passione innata per l'arte dolciaria, 
-                Chef Cristofaro crea dolci che incantano i sensi e conquistano il cuore, 
-                portando nelle vostre case il meglio della pasticceria artigianale italiana.
+                Sono cresciuto in laboratorio, tra sac à poche, impasti e il profumo dei dolci appena sfornati.
+                Da oltre vent'anni lavoro nella Raffaele Barbato Pasticceria a Frattaminore, il luogo dove ho imparato che la pasticceria non è solo una professione, ma una forma di rispetto verso chi assaggia.
+              </p>
+              <p className="text-gray-300 text-lg leading-relaxed mb-6">
+                Qui ho mosso i primi passi, qui ho sbagliato, imparato e affinato ogni gesto. Con il tempo ho scelto di approfondire l'arte dei lievitati francesi, studiando struttura, equilibrio e leggerezza. Allo stesso modo mi sono specializzato nella pasticceria senza glutine e senza lattosio, perché credo che il gusto non debba avere barriere.
+              </p>
+              <p className="text-gray-300 text-lg leading-relaxed mb-6">
+                Realizzo dolci tradizionali e contemporanei, con glutine e senza glutine, sempre con la stessa attenzione: qualità delle materie prime, tecnica precisa e un obiettivo chiaro, farvi vivere un momento autentico.
               </p>
               <p className="text-gray-300 text-lg leading-relaxed mb-8">
-                Ogni ingrediente è selezionato con cura, ogni ricetta è un capolavoro 
-                di dolcezza e dedizione, un perfetto equilibrio tra tradizione e innovazione.
+                Per me la pasticceria è questo: inclusione, cura e passione che si sente al primo morso.
               </p>
               <Link
                 href="/products"
