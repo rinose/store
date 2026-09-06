@@ -1,19 +1,32 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAdminAuth, AdminAuthProvider } from '../../contexts/AdminAuthContext';
 import ProtectedAdminRoute from '../../components/ProtectedAdminRoute';
+import { subscribeRecensioni } from '../../lib/recensioni';
 
 const AdminNavigation = ({ children }) => {
   const pathname = usePathname();
   const router = useRouter();
   const { logout, isAuthenticated, isLoading } = useAdminAuth();
+  const [pendingReviews, setPendingReviews] = useState(0);
+
+  useEffect(() => {
+    if (!isAuthenticated) return undefined;
+
+    const unsubscribe = subscribeRecensioni((reviews) => {
+      setPendingReviews(reviews.filter((review) => review.status === 'pending').length);
+    });
+
+    return () => unsubscribe();
+  }, [isAuthenticated]);
 
   const navItems = [
     { href: '/admin/products', label: 'Gestione Prodotti' },
     { href: '/admin/orders', label: 'Gestione Ordini' },
+    { href: '/admin/recensioni', label: 'Gestione Recensioni', badge: pendingReviews },
   ];
 
   const handleLogout = () => {
@@ -36,6 +49,14 @@ const AdminNavigation = ({ children }) => {
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-bold text-gray-900">Admin Panel</h1>
               <div className="flex items-center space-x-4">
+                {pendingReviews > 0 && (
+                  <Link
+                    href="/admin/recensioni"
+                    className="bg-yellow-100 text-yellow-800 px-3 py-1.5 rounded-full text-sm font-medium hover:bg-yellow-200"
+                  >
+                    {pendingReviews} recension{pendingReviews === 1 ? 'e' : 'i'} da approvare
+                  </Link>
+                )}
                 <Link 
                   href="/" 
                   className="text-blue-600 hover:text-blue-800 text-sm font-medium"
@@ -61,13 +82,18 @@ const AdminNavigation = ({ children }) => {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+                  className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors inline-flex items-center gap-2 ${
                     pathname === item.href
                       ? 'border-blue-500 text-blue-600 bg-blue-50'
                       : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                   }`}
                 >
                   {item.label}
+                  {item.badge > 0 && (
+                    <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-xs font-bold">
+                      {item.badge}
+                    </span>
+                  )}
                 </Link>
               ))}
             </div>
