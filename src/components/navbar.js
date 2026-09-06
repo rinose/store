@@ -19,6 +19,7 @@ export default function Navbar() {
   // Create navigation array
   const navigation = [
     { name: 'Prodotti', href: '/products', current: pathname === "/products" },
+    { name: 'Recensioni', href: '/recensioni', current: pathname === "/recensioni" },
     //{ name: 'Categorie', href: '/categories', current: pathname === "/categories" },
   ];
 
