@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useBasket } from '../../contexts/BasketContext';
+import NutritionTable from '../../components/NutritionTable';
+import { hasNutritionData } from '../../lib/nutrition';
 
 const CategoriesPage = () => {
   const { addToBasket, getBasketItemQuantity } = useBasket();
@@ -480,6 +482,12 @@ const CategoriesPage = () => {
               <div className="text-sm text-gray-700 leading-relaxed">
                 {selectedProductForIngredients.ingredients}
               </div>
+              {hasNutritionData(selectedProductForIngredients.nutrition) && (
+                <div className="mt-4">
+                  <h3 className="font-semibold mb-2">Valori nutrizionali</h3>
+                  <NutritionTable nutrition={selectedProductForIngredients.nutrition} />
+                </div>
+              )}
             </div>
           </div>
         </div>

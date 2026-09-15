@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { storage, db } from '../../../firebase';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
+import NutritionTable, { NutritionFields } from '../../../components/NutritionTable';
+import { emptyNutrition, hasNutritionData, normalizeNutrition } from '../../../lib/nutrition';
 
 const AdminProductsPage = () => {
   const [products, setProducts] = useState([]);
@@ -20,8 +22,11 @@ const AdminProductsPage = () => {
     price: '',
     tags: '',
     ingredients: '',
-    allergens: ''
+    allergens: '',
+    nutrition: emptyNutrition()
   });
+  const [editingNutritionId, setEditingNutritionId] = useState(null);
+  const [nutritionDraft, setNutritionDraft] = useState(null);
 
   // Image upload states
   const [selectedImages, setSelectedImages] = useState([]);
@@ -140,6 +145,7 @@ const AdminProductsPage = () => {
         tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [],
         ingredients: formData.ingredients || '',
         allergens: formData.allergens || '',
+        nutrition: normalizeNutrition(formData.nutrition),
         imageUrls: imageUrls,
         available: true,
         createdAt: serverTimestamp(),
@@ -153,7 +159,8 @@ const AdminProductsPage = () => {
         price: '',
         tags: '',
         ingredients: '',
-        allergens: ''
+        allergens: '',
+        nutrition: emptyNutrition()
       });
       
       clearImageSelection();
@@ -227,6 +234,33 @@ const AdminProductsPage = () => {
       ...editingField,
       [productId]: { ...editingField[productId], value }
     });
+  };
+
+  const startNutritionEdit = (product) => {
+    setEditingNutritionId(product.id);
+    setNutritionDraft(normalizeNutrition(product.nutrition));
+  };
+
+  const cancelNutritionEdit = () => {
+    setEditingNutritionId(null);
+    setNutritionDraft(null);
+  };
+
+  const saveNutrition = async (productId, productName) => {
+    try {
+      setError(null);
+      const productRef = doc(db, 'demo', 'data', 'products', productId);
+      await updateDoc(productRef, {
+        nutrition: normalizeNutrition(nutritionDraft),
+        updatedAt: serverTimestamp()
+      });
+      cancelNutritionEdit();
+      await fetchProducts();
+      alert(`Valori nutrizionali aggiornati per "${productName}"!`);
+    } catch (err) {
+      console.error('Error updating nutrition:', err);
+      setError('Errore nell\'aggiornamento: ' + err.message);
+    }
   };
 
   const saveEdit = async (productId, field, productName) => {
@@ -356,6 +390,14 @@ const AdminProductsPage = () => {
               placeholder="es. glutine, lattosio, frutta a guscio"
             />
             <p className="text-xs text-gray-500 mt-1">Separa gli allergeni con una virgola</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">Valori nutrizionali (per 100 g e per Base)</label>
+            <NutritionFields
+              nutrition={formData.nutrition}
+              onChange={(nutrition) => setFormData((prev) => ({ ...prev, nutrition }))}
+            />
           </div>
 
           <div>
@@ -630,7 +672,46 @@ const AdminProductsPage = () => {
                       )}
                     </div>
 
-                    {/* Images */}
+                    {/* Nutrition */}
+                    <div className="text-sm mb-2">
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <span className="font-medium">Valori nutrizionali:</span>
+                        {editingNutritionId !== product.id && (
+                          <button
+                            type="button"
+                            onClick={() => startNutritionEdit(product)}
+                            className="text-blue-600 hover:text-blue-800 text-xs"
+                          >
+                            {hasNutritionData(product.nutrition) ? 'Modifica' : 'Aggiungi'}
+                          </button>
+                        )}
+                      </div>
+                      {editingNutritionId === product.id ? (
+                        <div className="mt-2 space-y-3">
+                          <NutritionFields nutrition={nutritionDraft} onChange={setNutritionDraft} />
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => saveNutrition(product.id, product.name)}
+                              className="bg-green-500 text-white px-3 py-1 rounded text-sm"
+                            >
+                              Salva
+                            </button>
+                            <button
+                              type="button"
+                              onClick={cancelNutritionEdit}
+                              className="bg-gray-400 text-white px-3 py-1 rounded text-sm"
+                            >
+                              Annulla
+                            </button>
+                          </div>
+                        </div>
+                      ) : hasNutritionData(product.nutrition) ? (
+                        <NutritionTable nutrition={product.nutrition} />
+                      ) : (
+                        <span className="text-gray-500">Non inseriti</span>
+                      )}
+                    </div>
                     {product.imageUrls && product.imageUrls.length > 0 && (
                       <div className="flex gap-2 mt-2">
                         {product.imageUrls.map((url, idx) => (

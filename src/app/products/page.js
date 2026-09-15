@@ -4,6 +4,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useBasket } from '../../contexts/BasketContext';
 import { db } from "../../firebase";
 import { collection, getDocs } from "firebase/firestore";
+import NutritionTable from "../../components/NutritionTable";
+import { hasNutritionData } from "../../lib/nutrition";
 
 const ProductPage = () => {
   const { addToBasket, getBasketItemQuantity } = useBasket();
@@ -19,6 +21,8 @@ const ProductPage = () => {
   // Modal state for ingredients
   const [showIngredientsModal, setShowIngredientsModal] = useState(false);
   const [selectedProductForIngredients, setSelectedProductForIngredients] = useState(null);
+  const [showNutritionModal, setShowNutritionModal] = useState(false);
+  const [selectedProductForNutrition, setSelectedProductForNutrition] = useState(null);
   
   // Notification state
   const [notification, setNotification] = useState({ show: false, message: '' });
@@ -154,6 +158,16 @@ const ProductPage = () => {
   const handleCloseIngredientsModal = () => {
     setShowIngredientsModal(false);
     setSelectedProductForIngredients(null);
+  };
+
+  const handleShowNutrition = (product) => {
+    setSelectedProductForNutrition(product);
+    setShowNutritionModal(true);
+  };
+
+  const handleCloseNutritionModal = () => {
+    setShowNutritionModal(false);
+    setSelectedProductForNutrition(null);
   };
 
   // Navigate to next image in carousel
@@ -485,8 +499,19 @@ const ProductPage = () => {
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
                         <path strokeLinecap="round" strokeLinejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
                       </svg>
-
                     </button>
+
+                    {hasNutritionData(product.nutrition) && (
+                      <button
+                        onClick={() => handleShowNutrition(product)}
+                        className="bg-white text-gray-700 px-3 py-2 rounded-md text-sm hover:bg-gray-200 transition-colors"
+                        title="Valori nutrizionali"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3.375 5.25h17.25m-17.25 0A1.125 1.125 0 0 0 2.25 6.375v11.25c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125V6.375A1.125 1.125 0 0 0 20.625 5.25m-17.25 0V4.5A.75.75 0 0 1 4.125 3.75h15.75a.75.75 0 0 1 .75.75v.75M8.25 9h.008v.008H8.25V9Zm0 3h.008v.008H8.25V12Zm0 3h.008v.008H8.25V15Zm3.75-6h7.5m-7.5 3h7.5m-7.5 3h7.5" />
+                        </svg>
+                      </button>
+                    )}
                   </div>
                   
                   {/* Basket quantity - Fixed height space */}
@@ -566,6 +591,13 @@ const ProductPage = () => {
                 )}
               </div>
 
+              {hasNutritionData(selectedProductForIngredients.nutrition) && (
+                <div className="mb-4">
+                  <h3 className="text-sm font-medium text-gray-700 mb-2">Valori nutrizionali:</h3>
+                  <NutritionTable nutrition={selectedProductForIngredients.nutrition} />
+                </div>
+              )}
+
               {selectedProductForIngredients.tags && selectedProductForIngredients.tags.length > 0 && (
                 <div className="mb-4">
                   <h3 className="text-sm font-medium text-gray-700 mb-2">Tags:</h3>
@@ -617,6 +649,40 @@ const ProductPage = () => {
                     Esaurito
                   </button>
                 )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Nutrition Modal */}
+      {showNutritionModal && selectedProductForNutrition && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-800">
+                    {selectedProductForNutrition.name}
+                  </h2>
+                  <p className="text-sm text-gray-500">Valori nutrizionali</p>
+                </div>
+                <button
+                  onClick={handleCloseNutritionModal}
+                  className="text-gray-400 hover:text-gray-600 text-xl font-bold"
+                  title="Chiudi"
+                >
+                  ×
+                </button>
+              </div>
+              <NutritionTable nutrition={selectedProductForNutrition.nutrition} />
+              <div className="flex justify-end mt-6">
+                <button
+                  onClick={handleCloseNutritionModal}
+                  className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition-colors"
+                >
+                  Chiudi
+                </button>
               </div>
             </div>
           </div>
