@@ -312,11 +312,11 @@ const ProductPage = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProducts.map((product) => (
-            <div key={product.id} className="bg-white shadow-md rounded-lg border hover:shadow-lg transition-shadow overflow-hidden flex flex-col h-full relative">
+            <div key={product.id} className="bg-[#fffaf3] shadow-[0_12px_28px_rgba(170,133,16,0.14)] rounded-[2rem] border-2 border-brand-gold/35 hover:shadow-[0_18px_36px_rgba(170,133,16,0.22)] hover:-translate-y-0.5 transition-all overflow-hidden flex flex-col h-full relative">
               
               {/* Light grey overlay for unavailable products - preserves colors */}
               {product.available === false && (
-                <div className="absolute inset-0 bg-gray-100/40 z-10 pointer-events-none rounded-lg"></div>
+                <div className="absolute inset-0 bg-gray-100/40 z-10 pointer-events-none rounded-[2rem]"></div>
               )}
 
               {/* "ESAURITO" Banner - Overlapping style */}
@@ -326,8 +326,9 @@ const ProductPage = () => {
                 </div>
               )}
 
-              {/* Product Image - Aspect ratio container with blurred backdrop */}
-              <div className="aspect-[4/3] overflow-hidden relative bg-gray-100 group">
+              {/* Product Image - pastry plate frame */}
+              <div className="px-3 pt-3">
+              <div className="aspect-[4/3] overflow-hidden relative bg-[#f3ead6] rounded-[1.4rem] group">
                 {(() => {
                   // Support both new imageUrls array and legacy imageUrl
                   const images = product.imageUrls && product.imageUrls.length > 0
@@ -407,23 +408,29 @@ const ProductPage = () => {
                   );
                 })()}
               </div>
+              </div>
               
               {/* Product Content - Flexible grow */}
               <div className="p-6 flex flex-col flex-1">
                 {/* Product Name - Always present */}
-                <h3 className="text-lg text-brand-black font-semibold mb-2 line-clamp-2 min-h-[3.5rem]">{product.name}</h3>
+                <h3 className="text-lg text-brand-black font-semibold mb-2 line-clamp-2 min-h-[3.5rem] text-center tracking-wide">{product.name}</h3>
+                <div className="flex items-center justify-center gap-2 mb-3">
+                  <span className="block w-8 h-px bg-brand-gold/70"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-brand-gold"></span>
+                  <span className="block w-8 h-px bg-brand-gold/70"></span>
+                </div>
                 
                 {/* Description - Fixed height space */}
                 <div className="mb-3 min-h-[2.5rem]">
-                  <p className="text-gray-600 text-sm line-clamp-2">
+                  <p className="text-gray-600 text-sm line-clamp-2 text-center">
                     {product.description || "Nessuna descrizione disponibile"}
                   </p>
                 </div>
                 
                 {/* Price - Fixed height space */}
-                <div className="mb-4 min-h-[1.75rem]">
+                <div className="mb-4 min-h-[1.75rem] text-center">
                   {product.price ? (
-                    <p className="text-lg font-bold text-green-600">€{product.price.toFixed(2)}</p>
+                    <p className="text-lg font-bold text-brand-gold">€{product.price.toFixed(2)}</p>
                   ) : (
                     <p className="text-lg font-bold text-gray-400">Prezzo non disponibile</p>
                   )}
@@ -437,10 +444,10 @@ const ProductPage = () => {
                       product.tags.map((tag, tagIndex) => (
                         <span
                           key={tagIndex}
-                          className={`text-xs px-2 py-1 rounded cursor-pointer transition-colors ${
+                          className={`text-xs px-2.5 py-1 rounded-full cursor-pointer transition-colors ${
                             selectedTags.includes(tag)
-                              ? 'bg-blue-500 text-white'
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              ? 'bg-brand-gold text-white'
+                              : 'bg-[#f3ead6] text-brand-black border border-brand-gold/30 hover:bg-brand-gold/15'
                           }`}
                           onClick={() => handleTagToggle(tag)}
                           title={`Clicca per ${selectedTags.includes(tag) ? 'rimuovere' : 'aggiungere'} filtro`}
@@ -465,8 +472,9 @@ const ProductPage = () => {
                 )}
 
                 {/* Buttons - Always at bottom */}
-                <div className="mt-auto">
-                  <div className="flex items-center justify-between gap-2">
+                <div className="mt-auto -mx-6 -mb-6">
+                  <div className="flex items-center justify-center gap-6 bg-brand-gold py-3.5 rounded-b-[1.7rem]">
+                    {/* Add to cart disabled for now
                     <button
                       onClick={() => handleAddToCart(product)}
                       disabled={!product.price || product.available === false}
@@ -490,10 +498,11 @@ const ProductPage = () => {
                           : 'Non disponibile'
                       }
                     </button>
+                    */}
                     
                     <button
                       onClick={() => handleShowIngredients(product)}
-                      className="bg-white text-gray-700 px-3 py-2 rounded-md text-sm hover:bg-gray-200 transition-colors"
+                      className="bg-white text-brand-gold hover:bg-brand-black hover:text-white rounded-full p-2.5 shadow-sm transition-colors"
                       title="Vedi ingredienti"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
@@ -501,20 +510,18 @@ const ProductPage = () => {
                       </svg>
                     </button>
 
-                    {hasNutritionData(product.nutrition) && (
-                      <button
-                        onClick={() => handleShowNutrition(product)}
-                        className="bg-white text-gray-700 px-3 py-2 rounded-md text-sm hover:bg-gray-200 transition-colors"
-                        title="Valori nutrizionali"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3.375 5.25h17.25m-17.25 0A1.125 1.125 0 0 0 2.25 6.375v11.25c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125V6.375A1.125 1.125 0 0 0 20.625 5.25m-17.25 0V4.5A.75.75 0 0 1 4.125 3.75h15.75a.75.75 0 0 1 .75.75v.75M8.25 9h.008v.008H8.25V9Zm0 3h.008v.008H8.25V12Zm0 3h.008v.008H8.25V15Zm3.75-6h7.5m-7.5 3h7.5m-7.5 3h7.5" />
-                        </svg>
-                      </button>
-                    )}
+                    <button
+                      onClick={() => handleShowNutrition(product)}
+                      className="bg-white text-brand-gold hover:bg-brand-black hover:text-white rounded-full p-2.5 shadow-sm transition-colors"
+                      title="Valori nutrizionali"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.375 5.25h17.25m-17.25 0A1.125 1.125 0 0 0 2.25 6.375v11.25c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125V6.375A1.125 1.125 0 0 0 20.625 5.25m-17.25 0V4.5A.75.75 0 0 1 4.125 3.75h15.75a.75.75 0 0 1 .75.75v.75M8.25 9h.008v.008H8.25V9Zm0 3h.008v.008H8.25V12Zm0 3h.008v.008H8.25V15Zm3.75-6h7.5m-7.5 3h7.5m-7.5 3h7.5" />
+                      </svg>
+                    </button>
                   </div>
                   
-                  {/* Basket quantity - Fixed height space */}
+                  {/* Basket quantity disabled for now
                   <div className="mt-2 min-h-[1.5rem] text-center">
                     {getBasketItemQuantity(product.id) > 0 && (
                       <div className="text-sm text-green-600 font-medium">
@@ -522,6 +529,7 @@ const ProductPage = () => {
                       </div>
                     )}
                   </div>
+                  */}
                 </div>
               </div>
             </div>
@@ -630,6 +638,7 @@ const ProductPage = () => {
                 >
                   Chiudi
                 </button>
+                {/* Add to cart disabled for now
                 {selectedProductForIngredients.price && selectedProductForIngredients.available !== false && (
                   <button
                     onClick={() => {
@@ -649,6 +658,7 @@ const ProductPage = () => {
                     Esaurito
                   </button>
                 )}
+                */}
               </div>
             </div>
           </div>

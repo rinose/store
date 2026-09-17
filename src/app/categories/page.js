@@ -433,7 +433,7 @@ const CategoriesPage = () => {
                         </div>
                       )}
                       
-                      {/* Add to Cart Button - Always at bottom */}
+                      {/* Add to cart disabled for now
                       <div className="mt-auto">
                         {product.price && parseFloat(product.price) > 0 ? (
                           <button
@@ -448,6 +448,7 @@ const CategoriesPage = () => {
                           </div>
                         )}
                       </div>
+                      */}
                     </div>
                   </div>
                 );

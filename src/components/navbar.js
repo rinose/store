@@ -1,8 +1,10 @@
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/react'
-import { Bars3Icon, XMarkIcon, ShoppingCartIcon } from '@heroicons/react/24/outline'
-import { usePathname, useRouter } from "next/navigation";
+import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
+import { usePathname } from "next/navigation";
 import Link from 'next/link';
-import { useBasket } from '../contexts/BasketContext';
+// import { ShoppingCartIcon } from '@heroicons/react/24/outline'
+// import { useRouter } from "next/navigation";
+// import { useBasket } from '../contexts/BasketContext';
 
 
 
@@ -11,9 +13,8 @@ function classNames(...classes) {
 }
 
 export default function Navbar() {
-  const { getBasketItemsCount } = useBasket();
-
-  const router = useRouter();
+  // const { getBasketItemsCount } = useBasket();
+  // const router = useRouter();
   const pathname = usePathname();
   
   // Create navigation array
@@ -23,7 +24,7 @@ export default function Navbar() {
     //{ name: 'Categorie', href: '/categories', current: pathname === "/categories" },
   ];
 
-  const basketItemsCount = getBasketItemsCount();
+  // const basketItemsCount = getBasketItemsCount();
 
   return (
     <Disclosure
@@ -70,7 +71,7 @@ export default function Navbar() {
             </div>
           </div>
           <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
-            {/* Shopping Cart Icon */}
+            {/* Shopping cart disabled for now
             <button
               type="button"
               onClick={() => router.push('/basket')}
@@ -85,6 +86,7 @@ export default function Navbar() {
                 </span>
               )}
             </button>
+            */}
           </div>
         </div>
       </div>
